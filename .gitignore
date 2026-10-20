@@ -1,14 +1,14 @@
 # Unity
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
-/[Mm]emoryCaptures/
-/[Rr]ecordings/
-/Capturas/
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+**/Capturas/
 
 # Archivos generados por IDEs
 .vs/
@@ -38,3 +38,6 @@ sysinfo.txt
 crashlytics-build.properties
 .DS_Store
 Thumbs.db
+
+# Proyecto de plantilla vacío creado aparte (no es parte del juego)
+/elmapacho/
