@@ -22,13 +22,13 @@ namespace RobaYCorre
         public int normalSpeedCapacity = 6;
 
         [Header("Ruido")]
-        public float walkNoise = 2f;
-        public float crouchNoise = 0.5f;
-        public float runNoise = 12f;
-        public float bumpNoise = 15f;
-        public float pickupNoiseMultiplier = 3f;
-        public float decayStill = 10f;
-        public float decayWalk = 4f;
+        public float walkNoise = 2.6f;
+        public float crouchNoise = 0.7f;
+        public float runNoise = 15f;
+        public float bumpNoise = 19f;
+        public float pickupNoiseMultiplier = 3.8f;
+        public float decayStill = 8.5f;
+        public float decayWalk = 3.5f;
 
         [Header("Interacción")]
         public float interactRadius = 1.35f;
@@ -95,8 +95,8 @@ namespace RobaYCorre
             if (IsHidden)
             {
                 if (noise != null) noise.Decay(decayStill);
-                lm.SetPrompt($"Escondido {CurrentSpot.spotName}   ·   [E] Salir");
-                if (GameInput.InteractDown) ExitHiding();
+                lm.SetPrompt($"Escondido {CurrentSpot.spotName}   ·   [Q] Salir");
+                if (GameInput.HideDown || GameInput.InteractDown) ExitHiding();
                 return;
             }
 
@@ -144,6 +144,7 @@ namespace RobaYCorre
             // --- Interacción ---
             UpdateFocus(lm);
             if (GameInput.InteractDown) Interact(lm);
+            if (GameInput.HideDown && focusSpot != null) EnterHiding(focusSpot, lm);
             if (GameInput.DropDown) DropLast();
         }
 
@@ -174,11 +175,6 @@ namespace RobaYCorre
                 if (d < bestSpotD) { bestSpotD = d; bestSpot = s; }
             }
 
-            if (bestLoot != null && bestSpot != null)
-            {
-                if (bestLootD <= bestSpotD + 0.3f) bestSpot = null; else bestLoot = null;
-            }
-
             if (focusLoot != bestLoot)
             {
                 if (focusLoot != null) focusLoot.SetHighlight(false);
@@ -191,8 +187,8 @@ namespace RobaYCorre
                 lm.SetPrompt($"[E] ¡Escapar por {AtExit.exitName}!");
             else if (focusLoot != null)
             {
-                string extra = focusLoot.weight > FreeSpace ? "   (¡no cabe! suelta algo con Q)" : "";
-                lm.SetPrompt(focusLoot.Prompt + extra);
+                string extra = focusLoot.weight > FreeSpace ? "   (¡no cabe! suelta algo con R)" : "";
+                lm.SetPrompt(focusLoot.Prompt + extra + (focusSpot != null ? "   |   [Q] Esconderse" : ""));
             }
             else if (focusSpot != null)
                 lm.SetPrompt(focusSpot.Prompt);
@@ -210,7 +206,6 @@ namespace RobaYCorre
                 return;
             }
             if (focusLoot != null) TryPickup(focusLoot, lm);
-            else if (focusSpot != null) EnterHiding(focusSpot, lm);
         }
 
         public bool TryPickup(Lootable l, LevelManager lm)
@@ -218,7 +213,7 @@ namespace RobaYCorre
             if (l == null || l.IsCarried) return false;
             if (CarriedWeight + l.weight > capacity)
             {
-                LevelManager.Toast("¡La mochila está llena! Suelta algo (Q) o guarda el botín en la salida", HUD.Warn);
+                LevelManager.Toast("¡La mochila está llena! Suelta algo (R) o guarda el botín en la salida", HUD.Warn);
                 AudioManager.Play(Sfx.Full);
                 return false;
             }

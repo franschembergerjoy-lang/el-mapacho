@@ -23,6 +23,38 @@ namespace RobaYCorre.EditorTools
             Octa = Save("LP_Octaedro", MakeOcta());
         }
 
+
+        /// <summary>Caja centrada con UV en metros (las texturas se repiten sin estirarse). No se guarda como asset.</summary>
+        public static Mesh BoxUV(Vector3 size, float uvScale)
+        {
+            Vector3 h = size * 0.5f;
+            var v = new List<Vector3>();
+            var uv = new List<Vector2>();
+            var t = new List<int>();
+            void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal, Vector2 ua, Vector2 ub, Vector2 uc, Vector2 ud)
+            {
+                int k = v.Count;
+                v.Add(a); v.Add(b); v.Add(c); v.Add(d);
+                uv.Add(ua * uvScale); uv.Add(ub * uvScale); uv.Add(uc * uvScale); uv.Add(ud * uvScale);
+                if (Vector3.Dot(Vector3.Cross(b - a, c - a), normal) >= 0f) t.AddRange(new[] { k, k + 1, k + 2, k, k + 2, k + 3 });
+                else t.AddRange(new[] { k, k + 2, k + 1, k, k + 3, k + 2 });
+            }
+            float X = h.x, Y = h.y, Z = h.z;
+            Quad(new Vector3(-X, -Y, Z), new Vector3(-X, Y, Z), new Vector3(X, Y, Z), new Vector3(X, -Y, Z), Vector3.forward, new Vector2(-X, -Y), new Vector2(-X, Y), new Vector2(X, Y), new Vector2(X, -Y));
+            Quad(new Vector3(-X, -Y, -Z), new Vector3(-X, Y, -Z), new Vector3(X, Y, -Z), new Vector3(X, -Y, -Z), Vector3.back, new Vector2(-X, -Y), new Vector2(-X, Y), new Vector2(X, Y), new Vector2(X, -Y));
+            Quad(new Vector3(X, -Y, -Z), new Vector3(X, Y, -Z), new Vector3(X, Y, Z), new Vector3(X, -Y, Z), Vector3.right, new Vector2(-Z, -Y), new Vector2(-Z, Y), new Vector2(Z, Y), new Vector2(Z, -Y));
+            Quad(new Vector3(-X, -Y, -Z), new Vector3(-X, Y, -Z), new Vector3(-X, Y, Z), new Vector3(-X, -Y, Z), Vector3.left, new Vector2(-Z, -Y), new Vector2(-Z, Y), new Vector2(Z, Y), new Vector2(Z, -Y));
+            Quad(new Vector3(-X, Y, -Z), new Vector3(-X, Y, Z), new Vector3(X, Y, Z), new Vector3(X, Y, -Z), Vector3.up, new Vector2(-X, -Z), new Vector2(-X, Z), new Vector2(X, Z), new Vector2(X, -Z));
+            Quad(new Vector3(-X, -Y, -Z), new Vector3(-X, -Y, Z), new Vector3(X, -Y, Z), new Vector3(X, -Y, -Z), Vector3.down, new Vector2(-X, -Z), new Vector2(-X, Z), new Vector2(X, Z), new Vector2(X, -Z));
+            var m = new Mesh { name = "CajaUV" };
+            m.SetVertices(v);
+            m.SetUVs(0, uv);
+            m.SetTriangles(t, 0);
+            m.RecalculateNormals();
+            m.RecalculateBounds();
+            return m;
+        }
+
         static Mesh Save(string name, Mesh m)
         {
             string path = $"{Folder}/{name}.asset";

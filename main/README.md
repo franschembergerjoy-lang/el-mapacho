@@ -5,12 +5,12 @@ para robar comida y objetos, guardarlos en la salida y escapar sin que te atrape
 
 ## Cómo jugar desde Unity
 
-1. Abre Unity Hub → **Add / Agregar proyecto** → elige esta carpeta (`elmapacho`).
+1. Abre Unity Hub → **Add / Agregar proyecto** → elige esta carpeta (`elmapacho/main`).
 2. Ábrelo con la versión **6000.6.6f1**.
 3. Abre la escena `Assets/Scenes/MainMenu.unity` y pulsa **Play**.
 
-También hay un ejecutable listo en `Build/RobaYCorre.exe` (se regenera con el menú
-**Roba y corre → Compilar ejecutable para Windows**).
+El ejecutable de cada versión está en `../versiones/vN/Build/RobaYCorre.exe` (se genera con el menú
+**Roba y corre → Compilar ejecutable para Windows**, que lo deja en `main/Build`).
 
 ## Controles
 
@@ -19,8 +19,9 @@ También hay un ejecutable listo en `Build/RobaYCorre.exe` (se regenera con el m
 | WASD / flechas | Moverse |
 | Shift | Correr (hace mucho ruido) |
 | Ctrl o C | Agacharse (silencioso, te ven desde menos lejos) |
-| E | Robar / esconderse / salir del escondite / escapar |
-| Q | Soltar el último objeto |
+| E | Robar / escapar por la salida |
+| Q | Esconderse / salir del escondite |
+| R | Soltar el último objeto |
 | Esc o P | Pausa |
 
 ## Reglas
@@ -28,7 +29,7 @@ También hay un ejecutable listo en `Build/RobaYCorre.exe` (se regenera con el m
 - La mochila tiene **10** de espacio; con más de 6 vas un 15 % más lento.
 - Al llegar a la salida, lo que llevas se guarda automáticamente. Puedes hacer varios viajes.
 - Cuando tengas el botín del nivel (y el joyero en el nivel 5), pulsa **E** en la salida para escapar.
-- Barra de ruido (izquierda): 30 → alguien viene a mirar, 60 → te buscan activamente, si te ven te persiguen.
+- Barra de ruido (izquierda, más sensible desde la v2): 30 → alguien viene a mirar, 60 → te buscan activamente, si te ven te persiguen.
 - Estrellas: ★ escapar con el objetivo · ★ botín ≥ 140 % del objetivo · ★ que nadie te descubra.
 
 | Nivel | Escena | Objetivo | Vigilancia |

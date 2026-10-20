@@ -173,79 +173,166 @@ namespace RobaYCorre.EditorTools
             EditorUtility.SetDirty(m);
         }
 
-        // ---------------- Suelos con textura procedural ----------------
+        // ---------------- Contorno de dibujo animado ----------------
 
-        public enum FloorStyle { Tiles, Wood, Carpet, Checker, Concrete }
+        static Material outline;
+
+        /// <summary>Material oscuro sin luz que solo pinta caras traseras (contorno "inverted hull").</summary>
+        public static Material Outline
+        {
+            get
+            {
+                if (outline == null)
+                {
+                    outline = LoadOrCreate("Assets/Materials/Contorno.mat", Unlit);
+                    outline.SetColor("_BaseColor", new Color(0.1f, 0.07f, 0.18f, 1f));
+                    outline.SetFloat("_Cull", 1f);
+                    outline.SetShaderPassEnabled("ShadowCaster", false);
+                    EditorUtility.SetDirty(outline);
+                }
+                return outline;
+            }
+        }
+
+        // ---------------- Suelos, paredes y césped con textura procedural ----------------
+
+        public enum FloorStyle { Tiles, Wood, Carpet, Checker, Concrete, Wallpaper, Grass }
 
         public static Material Floor(string name, FloorStyle style, Color a, Color b)
         {
             string key = "Suelo_" + name;
             if (cache.TryGetValue(key, out var m) && m != null) return m;
-            var tex = FloorTexture(name, style, a, b);
+            var tex = MakeTexture(name, style, a, b);
             m = LoadOrCreate($"{FloorFolder}/M_Suelo_{name}.mat", Lit);
             m.SetTexture("_BaseMap", tex);
             m.SetColor("_BaseColor", Color.white);
-            m.SetFloat("_Smoothness", style == FloorStyle.Checker || style == FloorStyle.Tiles ? 0.35f : 0.1f);
+            m.SetFloat("_Smoothness", style == FloorStyle.Checker || style == FloorStyle.Tiles ? 0.4f : 0.12f);
             cache[key] = m;
             return m;
         }
 
-        static Texture2D FloorTexture(string name, FloorStyle style, Color a, Color b)
+        /// <summary>Material de pared con papel pintado suave del color indicado de la paleta.</summary>
+        public static Material Wall(string paletteName)
         {
-            const int s = 128;
+            string key = "Pared_" + paletteName;
+            if (cache.TryGetValue(key, out var m) && m != null) return m;
+            var baseCol = palette.TryGetValue(paletteName, out var def) ? def.col : Color.white;
+            var tex = MakeTexture("PapelPintado", FloorStyle.Wallpaper, Color.white, new Color(0.88f, 0.88f, 0.88f));
+            m = LoadOrCreate($"{FloorFolder}/M_Pared_{paletteName}.mat", Lit);
+            m.SetTexture("_BaseMap", tex);
+            m.SetColor("_BaseColor", baseCol);
+            m.SetFloat("_Smoothness", 0.1f);
+            cache[key] = m;
+            return m;
+        }
+
+        public static Material Grass()
+        {
+            return Floor("Cesped", FloorStyle.Grass, new Color(0.26f, 0.48f, 0.3f), new Color(0.18f, 0.36f, 0.24f));
+        }
+
+        static float Hash(int x, int y, int seed)
+        {
+            unchecked
+            {
+                int h = x * 374761393 + y * 668265263 + seed * 982451653;
+                h = (h ^ (h >> 13)) * 1274126177;
+                return ((h ^ (h >> 16)) & 0xFFFF) / 65535f;
+            }
+        }
+
+        static Texture2D MakeTexture(string name, FloorStyle style, Color a, Color b)
+        {
+            const int s = 256;
             var tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
-            var rng = new System.Random(name.GetHashCode());
+            int seed = name.Length * 31 + (int)style;
+            var px = new Color[s * s];
             for (int y = 0; y < s; y++)
             {
                 for (int x = 0; x < s; x++)
                 {
+                    float n = Hash(x, y, seed);
+                    float pn = Mathf.PerlinNoise(x * 0.03f + seed, y * 0.03f);
                     Color c = a;
-                    float n = (float)rng.NextDouble();
                     switch (style)
                     {
                         case FloorStyle.Tiles:
                             {
-                                bool grout = (x % 32) < 2 || (y % 32) < 2;
-                                c = grout ? b : a * (0.96f + 0.06f * (((x / 32) + (y / 32)) % 2));
+                                // 4x4 baldosas con junta y bisel claro arriba/izquierda.
+                                int lx = x % 64, ly = y % 64;
+                                bool grout = lx < 3 || ly < 3;
+                                float tint = 0.95f + 0.08f * Hash(x / 64, y / 64, seed);
+                                c = grout ? b : a * tint;
+                                if (!grout && (ly > 58 || lx < 7)) c = Color.Lerp(c, Color.white, 0.18f);
+                                if (!grout && (ly < 8 || lx > 58)) c *= 0.93f;
+                                c = Color.Lerp(c, c * (0.97f + 0.06f * pn), 0.6f);
                                 break;
                             }
                         case FloorStyle.Wood:
                             {
-                                int plank = y / 16;
-                                int offset = (plank * 37) % 128;
-                                bool seam = (y % 16) == 0 || ((x + offset) % 128) == 0;
-                                float tone = 0.88f + 0.12f * ((plank * 7919) % 5) / 4f;
-                                float grain = 0.97f + 0.03f * Mathf.Sin((x + offset) * 0.35f + plank);
-                                c = seam ? b : a * tone * grain;
+                                int plank = y / 32;
+                                int offset = (plank * 97) % 256;
+                                int px2 = (x + offset) % 256;
+                                bool seam = (y % 32) == 0 || px2 == 0 || (y % 32) == 31;
+                                float tone = 0.86f + 0.16f * Hash(plank, (x + offset) / 256, seed);
+                                float grain = 0.95f + 0.05f * Mathf.Sin(px2 * 0.12f + Mathf.Sin(y * 0.4f) * 2f + plank * 3f);
+                                float knot = Mathf.Clamp01(1f - Vector2.Distance(new Vector2(px2 % 128, y % 32), new Vector2(60f, 16f)) / 6f) * (plank % 3 == 0 ? 1f : 0f);
+                                c = seam ? b : a * tone * grain * (1f - 0.25f * knot);
                                 break;
                             }
                         case FloorStyle.Carpet:
-                            c = Color.Lerp(a, b, n * 0.35f);
-                            break;
+                            {
+                                float weave = ((x + y) % 4 < 2 ? 0.97f : 1.03f);
+                                c = Color.Lerp(a, b, n * 0.3f + pn * 0.25f) * weave;
+                                break;
+                            }
                         case FloorStyle.Checker:
                             {
-                                bool odd = ((x / 32) + (y / 32)) % 2 == 1;
-                                c = (odd ? b : a) * (0.97f + 0.03f * n);
+                                bool odd = ((x / 64) + (y / 64)) % 2 == 1;
+                                c = odd ? b : a;
+                                float vein = Mathf.Abs(Mathf.Sin((x + y * 0.6f) * 0.05f + pn * 6f));
+                                if (!odd && vein < 0.04f) c *= 0.9f;
+                                if (odd && vein < 0.04f) c = Color.Lerp(c, Color.white, 0.12f);
+                                if ((x % 64) < 2 || (y % 64) < 2) c *= 0.85f;
                                 break;
                             }
                         case FloorStyle.Concrete:
-                            c = Color.Lerp(a, b, n * 0.25f + 0.1f * Mathf.PerlinNoise(x * 0.05f, y * 0.05f));
+                            c = Color.Lerp(a, b, n * 0.2f + 0.35f * pn);
+                            if (Hash(x / 3, y / 3, seed + 7) > 0.985f) c *= 0.8f;
                             break;
+                        case FloorStyle.Wallpaper:
+                            {
+                                // Rayas verticales suaves con lunares pequeños.
+                                bool stripe = (x / 16) % 2 == 0;
+                                c = stripe ? a : b;
+                                float dx = (x % 32) - 24f, dy = (y % 32) - 16f;
+                                if (!stripe && dx * dx + dy * dy < 9f) c = Color.Lerp(b, Color.white, 0.6f);
+                                c *= 0.98f + 0.04f * n;
+                                break;
+                            }
+                        case FloorStyle.Grass:
+                            {
+                                float blade = Hash(x, y / 3, seed) > 0.7f ? 1.08f : 1f;
+                                c = Color.Lerp(a, b, pn * 0.8f + n * 0.15f) * blade;
+                                break;
+                            }
                     }
                     c.a = 1f;
-                    tex.SetPixel(x, y, c);
+                    px[y * s + x] = c;
                 }
             }
+            tex.SetPixels(px);
             tex.Apply(true);
-            string path = $"{TexFolder}/T_Suelo_{name}.png";
+            string path = $"{TexFolder}/T_{(style == FloorStyle.Wallpaper || style == FloorStyle.Grass ? "" : "Suelo_")}{name}.png";
             File.WriteAllBytes(path, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);
             AssetDatabase.ImportAsset(path);
             var imp = (TextureImporter)AssetImporter.GetAtPath(path);
             imp.wrapMode = TextureWrapMode.Repeat;
-            imp.filterMode = FilterMode.Bilinear;
-            imp.anisoLevel = 4;
+            imp.filterMode = FilterMode.Trilinear;
+            imp.anisoLevel = 8;
             imp.mipmapEnabled = true;
+            imp.textureCompression = TextureImporterCompression.CompressedHQ;
             imp.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }

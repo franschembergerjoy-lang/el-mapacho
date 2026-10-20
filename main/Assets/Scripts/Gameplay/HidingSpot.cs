@@ -31,7 +31,7 @@ namespace RobaYCorre
         void OnEnable() { if (!All.Contains(this)) All.Add(this); }
         void OnDisable() { All.Remove(this); }
 
-        public string Prompt => $"[E] Esconderse {spotName}";
+        public string Prompt => $"[Q] Esconderse {spotName}";
 
         /// <summary>Distancia desde un punto hasta la entrada más cercana.</summary>
         public float DistanceTo(Vector3 from)

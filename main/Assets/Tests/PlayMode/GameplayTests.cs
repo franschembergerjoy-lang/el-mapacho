@@ -281,5 +281,29 @@ namespace RobaYCorre.Tests
             Assert.IsFalse(chips.IsCarried);
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator WinScreenStaysUntilPlayerChooses()
+        {
+            yield return Load(1);
+            var lm = LevelManager.I;
+            lm.BeginPlay();
+            var p = lm.player;
+            foreach (var name in new[] { "Queso", "Pastel" })
+            {
+                var l = Lootable.All.First(x => x.itemName == name);
+                Teleport(p, l.transform.position + Vector3.back * 0.5f);
+                Assert.IsTrue(p.TryPickup(l, lm));
+            }
+            Teleport(p, lm.exit.transform.position);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(lm.GoalMet);
+            lm.Escape();
+            yield return new WaitForSecondsRealtime(3f);
+            Assert.AreEqual(GameProgress.LevelScenes[0], SceneManager.GetActiveScene().name, "La escena cambió sola tras ganar");
+            Assert.AreEqual(LevelState.Won, lm.State);
+            Assert.IsNotNull(GameObject.Find("Victoria"), "No aparece la pantalla de victoria");
+        }
     }
 }

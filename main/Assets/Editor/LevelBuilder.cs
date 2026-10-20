@@ -325,7 +325,8 @@ namespace RobaYCorre.EditorTools
             var wallRoot = Child(ctx.root, "Paredes");
             bool[,] used = new bool[W, H];
             bool IsWall(int c, int r) => At(def, c, r) == '#';
-            var wallMat = MatLib.Get(def.wallMat);
+            var wallMat = MatLib.Wall(def.wallMat);
+            var skirtMat = MatLib.Get("MaderaOscura");
             var capMat = MatLib.Get(def.capMat);
             int n = 0;
 
@@ -342,8 +343,7 @@ namespace RobaYCorre.EditorTools
                 body.layer = Layers.Walls;
                 body.transform.SetParent(go.transform, false);
                 body.transform.localPosition = new Vector3(0f, WallHeight / 2f, 0f);
-                body.transform.localScale = size;
-                body.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
+                body.AddComponent<MeshFilter>().sharedMesh = MeshLib.BoxUV(size, 1f);
                 var r1 = body.AddComponent<MeshRenderer>();
                 r1.sharedMaterial = wallMat;
                 var cap = new GameObject("Remate");
@@ -354,13 +354,21 @@ namespace RobaYCorre.EditorTools
                 cap.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
                 var r2 = cap.AddComponent<MeshRenderer>();
                 r2.sharedMaterial = capMat;
+                var skirt = new GameObject("Zocalo");
+                skirt.layer = Layers.Walls;
+                skirt.transform.SetParent(go.transform, false);
+                skirt.transform.localPosition = new Vector3(0f, 0.08f, 0f);
+                skirt.transform.localScale = new Vector3(size.x + 0.04f, 0.16f, size.z + 0.04f);
+                skirt.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
+                var r3 = skirt.AddComponent<MeshRenderer>();
+                r3.sharedMaterial = skirtMat;
                 var bc = go.AddComponent<BoxCollider>();
                 bc.center = new Vector3(0f, WallHeight / 2f, 0f);
                 bc.size = size;
                 var wf = go.AddComponent<WallFade>();
-                wf.renderers = new Renderer[] { r1, r2 };
-                wf.normalMaterials = new[] { wallMat, capMat };
-                wf.fadeMaterials = new[] { MatLib.Fade(wallMat), MatLib.Fade(capMat) };
+                wf.renderers = new Renderer[] { r1, r2, r3 };
+                wf.normalMaterials = new[] { wallMat, capMat, skirtMat };
+                wf.fadeMaterials = new[] { MatLib.Fade(wallMat), MatLib.Fade(capMat), MatLib.Fade(skirtMat) };
                 wf.fadedAlpha = 0.18f;
             }
 
@@ -431,9 +439,8 @@ namespace RobaYCorre.EditorTools
             var grass = new GameObject("Cesped");
             grass.transform.SetParent(outside, false);
             grass.transform.position = new Vector3((W - 1) / 2f, -0.06f, (H - 1) / 2f);
-            grass.transform.localScale = new Vector3(W + 50f, 0.1f, H + 50f);
-            grass.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
-            grass.AddComponent<MeshRenderer>().sharedMaterial = MatLib.Get("Cesped");
+            grass.AddComponent<MeshFilter>().sharedMesh = MeshLib.BoxUV(new Vector3(W + 50f, 0.1f, H + 50f), 0.25f);
+            grass.AddComponent<MeshRenderer>().sharedMaterial = MatLib.Grass();
 
             var rng = new System.Random(ctx.def.number * 31);
             for (float x = -1.5f; x < W + 1f; x += 2.6f)

@@ -37,7 +37,7 @@ namespace RobaYCorre
         public float eyeHeight = 1.5f;
 
         [Header("Oído")]
-        public float hearingRadius = 13f;
+        public float hearingRadius = 15f;
         [Tooltip("Ruido percibido necesario para despertarse")]
         public float wakeThreshold = 40f;
         public float investigateThreshold = 30f;

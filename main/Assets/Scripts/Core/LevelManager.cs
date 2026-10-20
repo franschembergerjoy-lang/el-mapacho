@@ -77,7 +77,7 @@ namespace RobaYCorre
                 var noise = NoiseSystem.I;
                 if (noise != null)
                 {
-                    noise.OnBurst += (amount, pos) => { if (amount >= noise.burstMessageThreshold) Toast("¡Hiciste ruido!", HUD.Warn); };
+                    noise.OnBurst += (amount, pos) => { if (amount >= noise.burstMessageThreshold) Hud?.Pop("¡HICISTE RUIDO!", HUD.Warn); };
                     noise.OnThresholdCrossed += mark =>
                     {
                         if (mark == 60) Toast("¡Mucho ruido! Te van a buscar", HUD.Bad);
@@ -193,7 +193,7 @@ namespace RobaYCorre
                 if (special) SpecialBanked = true;
                 AudioManager.Play(Sfx.Deposit);
                 Toast($"Guardaste {v} monedas en el escondite del botín", HUD.Good);
-                if (!wasMet && GoalMet) Toast("¡Objetivo cumplido! Pulsa E para escapar o sigue robando", HUD.Good);
+                if (!wasMet && GoalMet) { Toast("¡Objetivo cumplido! Pulsa E en la salida para escapar o sigue robando", HUD.Good); Hud?.Pop("¡OBJETIVO CUMPLIDO!", HUD.Good); }
                 tutorialDeposited = true;
             }
             else if (!GoalMet)
@@ -221,7 +221,7 @@ namespace RobaYCorre
             GameProgress.SetBestLoot(levelNumber, Banked);
             GameProgress.Unlock(levelNumber + 1);
             AudioManager.Play(Sfx.Escape);
-            Toast("¡Escapaste!", HUD.Good);
+            Hud?.Pop("¡ESCAPASTE!", HUD.Good);
             Hud?.ShowWin(stars);
         }
 
@@ -231,6 +231,7 @@ namespace RobaYCorre
             State = LevelState.Lost;
             CaughtBy = by;
             player?.OnCaught();
+            Hud?.Pop("¡ATRAPADO!", HUD.Bad);
             AudioManager.Play(Sfx.Caught);
             StartCoroutine(ShowLose());
         }
@@ -246,6 +247,7 @@ namespace RobaYCorre
             EverSpotted = true;
             AudioManager.Play(Sfx.Spotted);
             Toast($"¡Te vio {who}!", HUD.Bad);
+            Hud?.Pop("¡TE VIO!", HUD.Bad);
             Hud?.Flash(new Color(1f, 0.1f, 0.1f, 0.25f));
         }
 
@@ -256,6 +258,7 @@ namespace RobaYCorre
             NoiseSystem.I?.ForceMax(pos);
             AudioManager.Play(Sfx.Alarm);
             Toast(message, HUD.Bad);
+            Hud?.Pop("¡ALARMA!", HUD.Bad);
             Hud?.Flash(new Color(1f, 0f, 0f, 0.35f));
             foreach (var w in Perception.Watchers)
                 if (w is Resident r) r.Alert(pos, true);
@@ -267,7 +270,7 @@ namespace RobaYCorre
             "Muévete con WASD o las flechas. La cocina tiene comida: acércate y pulsa E para robar.",
             "¡Bien! Correr (Shift) hace mucho ruido. Agáchate con Ctrl para moverte en silencio.",
             "Lleva el botín a la gatera (la luz amarilla) para guardarlo. Puedes hacer varios viajes.",
-            "Si alguien se acerca, escóndete con E: debajo de la cama, en el armario, tras la cortina...",
+            "Si alguien se acerca, escóndete con Q: debajo de la cama, en el armario, tras la cortina...",
             "Cuando tengas el objetivo, pulsa E en la gatera para escapar. ¡Suerte, mapache!"
         };
 

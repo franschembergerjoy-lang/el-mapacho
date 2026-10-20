@@ -28,10 +28,11 @@ namespace RobaYCorre
         public static bool Crouch => Held(KeyId.Crouch);
         public static bool InteractDown => Down(KeyId.Interact);
         public static bool DropDown => Down(KeyId.Drop);
+        public static bool HideDown => Down(KeyId.Hide);
         public static bool PauseDown => Down(KeyId.Pause);
         public static bool ConfirmDown => Down(KeyId.Confirm);
 
-        enum KeyId { Up, Down, Left, Right, Run, Crouch, Interact, Drop, Pause, Confirm }
+        enum KeyId { Up, Down, Left, Right, Run, Crouch, Interact, Drop, Hide, Pause, Confirm }
 
         static bool Held(KeyId id)
         {
@@ -48,7 +49,8 @@ namespace RobaYCorre
                     case KeyId.Run: return k.leftShiftKey.isPressed || k.rightShiftKey.isPressed;
                     case KeyId.Crouch: return k.leftCtrlKey.isPressed || k.rightCtrlKey.isPressed || k.cKey.isPressed;
                     case KeyId.Interact: return k.eKey.isPressed;
-                    case KeyId.Drop: return k.qKey.isPressed;
+                    case KeyId.Drop: return k.rKey.isPressed;
+                    case KeyId.Hide: return k.qKey.isPressed;
                     case KeyId.Pause: return k.escapeKey.isPressed || k.pKey.isPressed;
                     case KeyId.Confirm: return k.enterKey.isPressed || k.spaceKey.isPressed || k.numpadEnterKey.isPressed;
                 }
@@ -64,7 +66,8 @@ namespace RobaYCorre
                 case KeyId.Run: return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
                 case KeyId.Crouch: return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.C);
                 case KeyId.Interact: return Input.GetKey(KeyCode.E);
-                case KeyId.Drop: return Input.GetKey(KeyCode.Q);
+                case KeyId.Drop: return Input.GetKey(KeyCode.R);
+                case KeyId.Hide: return Input.GetKey(KeyCode.Q);
                 case KeyId.Pause: return Input.GetKey(KeyCode.Escape) || Input.GetKey(KeyCode.P);
                 case KeyId.Confirm: return Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.KeypadEnter);
             }
@@ -81,7 +84,8 @@ namespace RobaYCorre
                 switch (id)
                 {
                     case KeyId.Interact: return k.eKey.wasPressedThisFrame;
-                    case KeyId.Drop: return k.qKey.wasPressedThisFrame;
+                    case KeyId.Drop: return k.rKey.wasPressedThisFrame;
+                    case KeyId.Hide: return k.qKey.wasPressedThisFrame;
                     case KeyId.Pause: return k.escapeKey.wasPressedThisFrame || k.pKey.wasPressedThisFrame;
                     case KeyId.Confirm: return k.enterKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame || k.numpadEnterKey.wasPressedThisFrame;
                 }
@@ -92,7 +96,8 @@ namespace RobaYCorre
             switch (id)
             {
                 case KeyId.Interact: return Input.GetKeyDown(KeyCode.E);
-                case KeyId.Drop: return Input.GetKeyDown(KeyCode.Q);
+                case KeyId.Drop: return Input.GetKeyDown(KeyCode.R);
+                case KeyId.Hide: return Input.GetKeyDown(KeyCode.Q);
                 case KeyId.Pause: return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P);
                 case KeyId.Confirm: return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter);
             }

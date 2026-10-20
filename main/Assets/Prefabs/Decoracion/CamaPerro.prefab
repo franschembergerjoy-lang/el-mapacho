@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1162948537468520633
+--- !u!1 &2214526111922303228
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3111914629580502886}
-  - component: {fileID: 4553052768881802434}
-  - component: {fileID: 1322203174958283362}
+  - component: {fileID: 7318772526348182552}
+  - component: {fileID: 5924679323979647391}
+  - component: {fileID: 1735610186871093434}
   m_Layer: 0
   m_Name: Cilindro
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3111914629580502886
+--- !u!4 &7318772526348182552
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1162948537468520633}
+  m_GameObject: {fileID: 2214526111922303228}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0.25, y: 0.2, z: 0.05}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 728293025291221091}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &4553052768881802434
+--- !u!33 &5924679323979647391
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1162948537468520633}
+  m_GameObject: {fileID: 2214526111922303228}
   m_Mesh: {fileID: 4300000, guid: 6ffc9d4d56bb2bc43aee5fd70a00aab7, type: 2}
---- !u!23 &1322203174958283362
+--- !u!23 &1735610186871093434
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1162948537468520633}
+  m_GameObject: {fileID: 2214526111922303228}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -120,11 +120,11 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8928333552301887017}
-  - {fileID: 7669703056252559446}
-  - {fileID: 3111914629580502886}
+  - {fileID: 3023416332626347486}
+  - {fileID: 7318772526348182552}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &7572747067431063122
+--- !u!1 &5766051184093615671
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -132,9 +132,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7669703056252559446}
-  - component: {fileID: 7999377499324519007}
-  - component: {fileID: 1727119330517159065}
+  - component: {fileID: 3023416332626347486}
+  - component: {fileID: 4304018159065347992}
+  - component: {fileID: 5094879884927368063}
   m_Layer: 0
   m_Name: Cilindro
   m_TagString: Untagged
@@ -142,13 +142,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7669703056252559446
+--- !u!4 &3023416332626347486
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7572747067431063122}
+  m_GameObject: {fileID: 5766051184093615671}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.12, z: 0}
@@ -157,21 +157,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 728293025291221091}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &7999377499324519007
+--- !u!33 &4304018159065347992
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7572747067431063122}
+  m_GameObject: {fileID: 5766051184093615671}
   m_Mesh: {fileID: 4300000, guid: 6ffc9d4d56bb2bc43aee5fd70a00aab7, type: 2}
---- !u!23 &1727119330517159065
+--- !u!23 &5094879884927368063
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7572747067431063122}
+  m_GameObject: {fileID: 5766051184093615671}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1

@@ -89,9 +89,9 @@ namespace RobaYCorre.EditorTools
             var wall = new GameObject("Pared");
             wall.transform.SetParent(deco, false);
             wall.transform.position = new Vector3(0f, 0.8f, 3.2f);
-            wall.transform.localScale = new Vector3(14f, 1.6f, 0.35f);
-            wall.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
-            wall.AddComponent<MeshRenderer>().sharedMaterial = MatLib.Get("ParedNaranja");
+            wall.transform.localScale = Vector3.one;
+            wall.AddComponent<MeshFilter>().sharedMesh = MeshLib.BoxUV(new Vector3(14f, 1.6f, 0.35f), 1f);
+            wall.AddComponent<MeshRenderer>().sharedMaterial = MatLib.Wall("ParedNaranja");
 
             GameObject Put(string prefab, float x, float z, float rot, float y = 0f)
             {
@@ -140,7 +140,10 @@ namespace RobaYCorre.EditorTools
         {
             var scenes = new List<string>();
             foreach (var s in EditorBuildSettings.scenes) if (s.enabled) scenes.Add(s.path);
-            var report = BuildPipeline.BuildPlayer(scenes.ToArray(), "Build/RobaYCorre.exe", BuildTarget.StandaloneWindows64, BuildOptions.None);
+            string output = "Build/RobaYCorre.exe";
+            var args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++) if (args[i] == "-salida") output = args[i + 1];
+            var report = BuildPipeline.BuildPlayer(scenes.ToArray(), output, BuildTarget.StandaloneWindows64, BuildOptions.None);
             Debug.Log("[Roba y corre] Resultado de la compilación: " + report.summary.result + " (" + report.summary.totalErrors + " errores)");
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new Exception("La compilación falló");
         }

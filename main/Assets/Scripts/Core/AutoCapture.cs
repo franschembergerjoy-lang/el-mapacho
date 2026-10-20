@@ -35,6 +35,10 @@ namespace RobaYCorre
             Directory.CreateDirectory(dir);
             yield return new WaitForSeconds(2f);
             yield return Shot("juego_menu");
+            GameProgress.OpenLevelSelect = true;
+            SceneManager.LoadScene(GameProgress.MenuScene);
+            yield return new WaitForSeconds(2f);
+            yield return Shot("juego_menu_niveles");
 
             GameProgress.LoadLevel(1);
             yield return new WaitForSeconds(1.5f);
@@ -50,6 +54,12 @@ namespace RobaYCorre
             p.TryPickup(cake, LevelManager.I);
             yield return new WaitForSeconds(0.6f);
             yield return Shot("juego_n1_cargando_botin");
+            Teleport(p, LevelManager.I.exit.transform.position);
+            yield return new WaitForSeconds(1f);
+            yield return Shot("juego_n1_salida");
+            LevelManager.I.Escape();
+            yield return new WaitForSeconds(2.5f);
+            yield return Shot("juego_n1_victoria");
 
             GameProgress.LoadLevel(3);
             yield return new WaitForSeconds(1.2f);
@@ -83,8 +93,16 @@ namespace RobaYCorre
             cc.enabled = true;
         }
 
+        void Update()
+        {
+            // Durante la captura automática se ignoran clics del ratón (por si alguien toca la ventana).
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null && es.enabled) es.enabled = false;
+        }
+
         IEnumerator Shot(string name)
         {
+            Debug.Log("[AutoCaptura] " + name);
             yield return new WaitForEndOfFrame();
             ScreenCapture.CaptureScreenshot(Path.Combine(dir, name + ".png"));
             yield return new WaitForSecondsRealtime(0.3f);
