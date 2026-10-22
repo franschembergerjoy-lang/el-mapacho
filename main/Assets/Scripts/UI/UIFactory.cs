@@ -186,6 +186,30 @@ namespace RobaYCorre
             return pts;
         }
 
+        static Sprite sideFade;
+
+        /// <summary>Degradado horizontal suave (opaco a la izquierda, transparente a la derecha).</summary>
+        public static Sprite SideFade
+        {
+            get
+            {
+                if (sideFade == null)
+                {
+                    const int w = 256, h = 4;
+                    var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+                    for (int x = 0; x < w; x++)
+                    {
+                        float t = x / (float)(w - 1);
+                        float a = 1f - Mathf.SmoothStep(0.35f, 1f, t);
+                        for (int y = 0; y < h; y++) tex.SetPixel(x, y, new Color(1, 1, 1, a));
+                    }
+                    tex.Apply();
+                    sideFade = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f));
+                }
+                return sideFade;
+            }
+        }
+
         /// <summary>Rayos de sol (para fondos que giran).</summary>
         public static Sprite Burst
         {
@@ -193,15 +217,16 @@ namespace RobaYCorre
             {
                 if (burst == null)
                 {
-                    const int s = 256;
-                    var tex = new Texture2D(s, s, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+                    const int s = 512;
+                    var tex = new Texture2D(s, s, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
                     for (int y = 0; y < s; y++)
                         for (int x = 0; x < s; x++)
                         {
                             float dx = x - s / 2f, dy = y - s / 2f;
                             float d = Mathf.Sqrt(dx * dx + dy * dy) / (s / 2f);
                             float ang = Mathf.Atan2(dy, dx);
-                            float ray = Mathf.Sin(ang * 12f) > 0f ? 1f : 0f;
+                            // Borde suavizado de cada rayo (sin escalones).
+                            float ray = Mathf.Clamp01(Mathf.Sin(ang * 12f) * Mathf.Max(8f, d * 60f) + 0.5f);
                             float a = ray * Mathf.Clamp01(1f - d) * Mathf.Clamp01(d * 6f);
                             tex.SetPixel(x, y, new Color(1, 1, 1, a));
                         }
@@ -294,12 +319,12 @@ namespace RobaYCorre
                 flat.color = color;
                 return flat;
             }
-            var shadow = Image(rt, "Sombra", new Color(0f, 0f, 0f, 0.32f * color.a), Solid);
+            var shadow = Image(rt, "Sombra", new Color(0.05f, 0.02f, 0.15f, 0.22f * color.a), Solid);
             shadow.type = UnityEngine.UI.Image.Type.Sliced;
-            Fill(shadow.rectTransform, new Vector2(-2f, -10f), new Vector2(2f, -2f));
+            Fill(shadow.rectTransform, new Vector2(0f, -7f), new Vector2(0f, -1f));
             var border = Image(rt, "Borde", Ink * new Color(1, 1, 1, Mathf.Max(0.6f, color.a)), Solid);
             border.type = UnityEngine.UI.Image.Type.Sliced;
-            Fill(border.rectTransform, new Vector2(-5f, -5f), new Vector2(5f, 5f));
+            Fill(border.rectTransform, new Vector2(-4f, -4f), new Vector2(4f, 4f));
             var body = Image(rt, "Cuerpo", color, Chunky);
             body.type = UnityEngine.UI.Image.Type.Sliced;
             body.raycastTarget = true;
@@ -344,16 +369,12 @@ namespace RobaYCorre
             t.supportRichText = true;
             if (shadow)
             {
-                float w = Mathf.Clamp(size / 12f, 1.5f, 5f);
+                // Contorno fino y nítido, sin sombra desplazada.
+                float w = Mathf.Clamp(size / 22f, 1f, 2.6f);
                 var ol = go.AddComponent<Outline>();
-                ol.effectColor = Ink;
-                ol.effectDistance = new Vector2(w, -w);
-                var ol2 = go.AddComponent<Outline>();
-                ol2.effectColor = Ink;
-                ol2.effectDistance = new Vector2(-w, w);
-                var sh = go.AddComponent<Shadow>();
-                sh.effectColor = new Color(0f, 0f, 0f, 0.45f);
-                sh.effectDistance = new Vector2(0f, -w * 1.6f);
+                ol.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.85f);
+                ol.effectDistance = new Vector2(w, w);
+                ol.useGraphicAlpha = true;
             }
             return t;
         }

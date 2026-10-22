@@ -47,7 +47,7 @@ namespace RobaYCorre
             t += Time.unscaledDeltaTime;
             if (t < 0f) { transform.localScale = Vector3.zero; return; }
             float k = t / duration;
-            float s = elastic ? Ease.OutElastic(k) : Ease.OutBack(k);
+            float s = elastic ? Ease.OutBack(k, 2.4f) : Ease.OutBack(k, 1.6f);
             transform.localScale = target * s;
             if (k >= 1f) { transform.localScale = target; enabled = false; }
         }
@@ -76,10 +76,10 @@ namespace RobaYCorre
             hoverAnim = Mathf.MoveTowards(hoverAnim, hover, dt * 6f);
             pressAnim = Mathf.MoveTowards(pressAnim, press, dt * 12f);
             wobble = Mathf.MoveTowards(wobble, 0f, dt * 2f);
-            float s = 1f + 0.07f * hoverAnim - 0.08f * pressAnim;
+            float s = 1f + 0.05f * hoverAnim - 0.06f * pressAnim;
             float sq = Mathf.Sin(Time.unscaledTime * 22f) * 0.04f * wobble;
             transform.localScale = new Vector3(baseScale.x * (s + sq), baseScale.y * (s - sq), 1f);
-            transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.unscaledTime * 16f) * 3f * wobble);
+            transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.unscaledTime * 14f) * 1.6f * wobble);
         }
     }
 

@@ -15,9 +15,14 @@ namespace RobaYCorre
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Init()
         {
-            foreach (var a in System.Environment.GetCommandLineArgs())
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
             {
-                if (a == "-autocaptura")
+                if (args[i] == "-recorrido" && i + 1 < args.Length) int.TryParse(args[i + 1], out onlyLevel);
+            }
+            foreach (var a in args)
+            {
+                if (a == "-autocaptura" || a == "-recorrido")
                 {
                     var go = new GameObject("AutoCapture");
                     DontDestroyOnLoad(go);
@@ -28,12 +33,19 @@ namespace RobaYCorre
         }
 
         string dir;
+        static int onlyLevel;
 
         IEnumerator Start()
         {
             dir = Path.Combine(Path.GetDirectoryName(Application.dataPath) ?? ".", "Capturas");
             Directory.CreateDirectory(dir);
             yield return new WaitForSeconds(2f);
+            if (onlyLevel > 0)
+            {
+                yield return Tour(onlyLevel);
+                Application.Quit();
+                yield break;
+            }
             yield return Shot("juego_menu");
             GameProgress.OpenLevelSelect = true;
             SceneManager.LoadScene(GameProgress.MenuScene);
@@ -82,7 +94,37 @@ namespace RobaYCorre
             LevelManager.I.Pause();
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Shot("juego_n5_pausa");
+            LevelManager.I.Resume();
+
+            // Recorrido de revisión gráfica por todas las casas (los vigilantes se desactivan).
+            for (int lvl = 1; lvl <= GameProgress.LevelCount; lvl++) yield return Tour(lvl);
             Application.Quit();
+        }
+
+        IEnumerator Tour(int lvl)
+        {
+            {
+                GameProgress.LoadLevel(lvl);
+                yield return new WaitForSeconds(1.2f);
+                LevelManager.I.BeginPlay();
+                foreach (var r in FindObjectsByType<Resident>()) r.enabled = false;
+                foreach (var d in FindObjectsByType<Dog>()) d.enabled = false;
+                foreach (var c in FindObjectsByType<SecurityCamera>()) c.enabled = false;
+                foreach (var m in FindObjectsByType<MotionSensor>()) m.enabled = false;
+                var loot = Lootable.All.FindAll(l => !l.IsCarried);
+                loot.Sort((a, b) => (a.transform.position.x + a.transform.position.z * 1.7f).CompareTo(b.transform.position.x + b.transform.position.z * 1.7f));
+                var pl = LevelManager.I.player;
+                for (int k = 0; k < 4; k++)
+                {
+                    if (k > 0)
+                    {
+                        var l = loot[Mathf.Min(loot.Count - 1, (k * loot.Count) / 4)];
+                        Teleport(pl, l.transform.position + new Vector3(0f, 0f, -0.9f));
+                    }
+                    yield return new WaitForSeconds(1.3f);
+                    yield return Shot($"recorrido_n{lvl}_{k}");
+                }
+            }
         }
 
         static void Teleport(RaccoonController p, Vector3 pos)

@@ -8,7 +8,7 @@ namespace RobaYCorre.EditorTools
     public static class MeshLib
     {
         public const string Folder = "Assets/Models/Meshes";
-        public static Mesh Cube, Sphere, Cylinder, Cone, Wedge, Shade, Pot, Octa;
+        public static Mesh Cube, Sphere, Cylinder, Cone, Wedge, Shade, Pot, Octa, SmoothSphere, Capsule;
 
         public static void Build()
         {
@@ -21,6 +21,8 @@ namespace RobaYCorre.EditorTools
             Pot = Save("LP_Maceta", MakeFrustum(8, 0.36f, 0.5f));
             Wedge = Save("LP_Cuna", MakeWedge());
             Octa = Save("LP_Octaedro", MakeOcta());
+            SmoothSphere = Save("LP_EsferaSuave", MakeIcoSphere(2));
+            Capsule = Save("LP_Capsula", MakeCapsule(12, 4));
         }
 
 
@@ -201,6 +203,57 @@ namespace RobaYCorre.EditorTools
                     t.Add(topCenter); t.Add(sides + i); t.Add(sides + n);
                 }
                 t.Add(bottomCenter); t.Add(n); t.Add(i);
+            }
+            return Flat(p, t);
+        }
+
+
+        /// <summary>Cápsula de radio 0,5 y altura total 2 (centrada). Escalar Y = mitad del largo.</summary>
+        static Mesh MakeCapsule(int sides, int rings)
+        {
+            var p = new List<Vector3>();
+            var t = new List<int>();
+            // Anillos desde el polo inferior al superior.
+            var ringsList = new List<(float y, float r)>();
+            for (int i = 1; i <= rings; i++)
+            {
+                float a = -Mathf.PI / 2f + i * (Mathf.PI / 2f) / rings;
+                ringsList.Add((-0.5f + Mathf.Sin(a) * 0.5f, Mathf.Cos(a) * 0.5f));
+            }
+            for (int i = 0; i < rings; i++)
+            {
+                float a = i * (Mathf.PI / 2f) / rings;
+                ringsList.Add((0.5f + Mathf.Sin(a) * 0.5f, Mathf.Cos(a) * 0.5f));
+            }
+            p.Add(new Vector3(0f, -1f, 0f));
+            foreach (var (y, r) in ringsList)
+                for (int s = 0; s < sides; s++)
+                {
+                    float ang = s * Mathf.PI * 2f / sides;
+                    p.Add(new Vector3(Mathf.Cos(ang) * r, y, Mathf.Sin(ang) * r));
+                }
+            p.Add(new Vector3(0f, 1f, 0f));
+            int top = p.Count - 1;
+            for (int s = 0; s < sides; s++)
+            {
+                int n = (s + 1) % sides;
+                t.Add(0); t.Add(1 + s); t.Add(1 + n);
+            }
+            for (int ri = 0; ri < ringsList.Count - 1; ri++)
+            {
+                int b0 = 1 + ri * sides, b1 = 1 + (ri + 1) * sides;
+                for (int s = 0; s < sides; s++)
+                {
+                    int n = (s + 1) % sides;
+                    t.Add(b0 + s); t.Add(b1 + s); t.Add(b1 + n);
+                    t.Add(b0 + s); t.Add(b1 + n); t.Add(b0 + n);
+                }
+            }
+            int last = 1 + (ringsList.Count - 1) * sides;
+            for (int s = 0; s < sides; s++)
+            {
+                int n = (s + 1) % sides;
+                t.Add(top); t.Add(last + n); t.Add(last + s);
             }
             return Flat(p, t);
         }

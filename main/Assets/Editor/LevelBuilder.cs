@@ -349,7 +349,8 @@ namespace RobaYCorre.EditorTools
                 var cap = new GameObject("Remate");
                 cap.layer = Layers.Walls;
                 cap.transform.SetParent(go.transform, false);
-                cap.transform.localPosition = new Vector3(0f, WallHeight + 0.04f, 0f);
+                bool vertical = Mathf.Abs(x1 - x0) < 0.001f && Mathf.Abs(z1 - z0) > 0.001f;
+                cap.transform.localPosition = new Vector3(0f, WallHeight + 0.04f + (vertical ? 0.006f : 0f), 0f);
                 cap.transform.localScale = new Vector3(size.x + 0.04f, 0.08f, size.z + 0.04f);
                 cap.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
                 var r2 = cap.AddComponent<MeshRenderer>();
@@ -358,7 +359,7 @@ namespace RobaYCorre.EditorTools
                 skirt.layer = Layers.Walls;
                 skirt.transform.SetParent(go.transform, false);
                 skirt.transform.localPosition = new Vector3(0f, 0.08f, 0f);
-                skirt.transform.localScale = new Vector3(size.x + 0.04f, 0.16f, size.z + 0.04f);
+                skirt.transform.localScale = new Vector3(size.x + (vertical ? 0.05f : 0.04f), vertical ? 0.17f : 0.16f, size.z + (vertical ? 0.05f : 0.04f));
                 skirt.AddComponent<MeshFilter>().sharedMesh = MeshLib.Cube;
                 var r3 = skirt.AddComponent<MeshRenderer>();
                 r3.sharedMaterial = skirtMat;
@@ -390,7 +391,9 @@ namespace RobaYCorre.EditorTools
                     }
                 }
             }
-            // Tramos verticales.
+            // Tramos verticales. Si un extremo toca un tramo horizontal, el muro termina en su cara
+            // (sin superponerse), así no parpadean el papel pintado ni el remate en las esquinas.
+            var usedH = (bool[,])used.Clone();
             for (int c = 0; c < W; c++)
             {
                 int r = 0;
@@ -402,7 +405,11 @@ namespace RobaYCorre.EditorTools
                     int end = r - 1;
                     if (end > start)
                     {
-                        MakeWall(c, H - 1 - start, c, H - 1 - end);
+                        float zTop = H - 1 - start, zBot = H - 1 - end;
+                        float tt = WallThickness;
+                        if (usedH[c, start]) zTop -= tt;
+                        if (usedH[c, end]) zBot += tt;
+                        if (zTop > zBot + 0.001f) MakeWall(c, zTop, c, zBot);
                         for (int k = start; k <= end; k++) used[c, k] = true;
                     }
                 }
@@ -438,7 +445,7 @@ namespace RobaYCorre.EditorTools
             var outside = new GameObject("Exterior").transform;
             var grass = new GameObject("Cesped");
             grass.transform.SetParent(outside, false);
-            grass.transform.position = new Vector3((W - 1) / 2f, -0.06f, (H - 1) / 2f);
+            grass.transform.position = new Vector3((W - 1) / 2f, -0.1f, (H - 1) / 2f);
             grass.AddComponent<MeshFilter>().sharedMesh = MeshLib.BoxUV(new Vector3(W + 50f, 0.1f, H + 50f), 0.25f);
             grass.AddComponent<MeshRenderer>().sharedMaterial = MatLib.Grass();
 

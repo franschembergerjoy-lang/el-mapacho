@@ -73,10 +73,10 @@ namespace RobaYCorre
             var top = new Vector2(0.5f, 1f);
 
             // Fondo: degradado lateral y rayos girando detrás del título.
-            var shade = UIFactory.Image(root, "Degradado", new Color(0.25f, 0.1f, 0.55f, 0.55f), UIFactory.Rounded);
+            var shade = UIFactory.Image(root, "Degradado", new Color(0.22f, 0.08f, 0.5f, 0.75f), UIFactory.SideFade);
             var srt = shade.rectTransform;
-            srt.anchorMin = new Vector2(0f, 0f); srt.anchorMax = new Vector2(0.52f, 1f);
-            srt.offsetMin = new Vector2(-60f, -60f); srt.offsetMax = new Vector2(0f, 60f);
+            srt.anchorMin = new Vector2(0f, 0f); srt.anchorMax = new Vector2(0.62f, 1f);
+            srt.offsetMin = Vector2.zero; srt.offsetMax = Vector2.zero;
             var rays = UIFactory.Image(root, "Rayos", new Color(1f, 0.85f, 0.3f, 0.22f), UIFactory.Burst);
             rays.rectTransform.anchorMin = rays.rectTransform.anchorMax = new Vector2(0.27f, 0.72f);
             rays.rectTransform.sizeDelta = new Vector2(1500f, 1500f);

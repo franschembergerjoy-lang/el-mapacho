@@ -151,17 +151,17 @@ namespace RobaYCorre
             hiddenText = UIFactory.Label(root, "", 34, Info, TextAnchor.MiddleCenter, C, new Vector2(0f, -170f), new Vector2(900f, 60f));
 
             // --- Consejos (nivel 1) ---
-            var tut = UIFactory.Panel(root, "Tutorial", UIFactory.ButtonAlt, BL, new Vector2(170f, 120f), new Vector2(580f, 120f));
+            var tut = UIFactory.Panel(root, "Tutorial", UIFactory.ButtonAlt, TR, new Vector2(-28f, -150f), new Vector2(520f, 128f));
             tutorialPanel = tut.transform.parent.gameObject;
             var tag = UIFactory.Panel(tut.transform, "Etiqueta", UIFactory.ButtonColor, TL, new Vector2(16f, 22f), new Vector2(150f, 40f));
             tag.transform.parent.localRotation = Quaternion.Euler(0f, 0f, 4f);
             UIFactory.Label(tag.transform, "CONSEJO", 20, UIFactory.Ink, TextAnchor.MiddleCenter, C, new Vector2(0f, 1f), new Vector2(150f, 36f), FontStyle.Normal, false);
-            tutorialText = UIFactory.Label(tut.transform, "", 22, Color.white, TextAnchor.MiddleLeft, C, new Vector2(0f, -6f), new Vector2(540f, 96f));
+            tutorialText = UIFactory.Label(tut.transform, "", 21, Color.white, TextAnchor.MiddleLeft, C, new Vector2(0f, -8f), new Vector2(484f, 100f));
             tutorialPanel.SetActive(false);
 
             // --- Avisos y carteles grandes ---
             var tr = new GameObject("Avisos");
-            toastRoot = UIFactory.Rect(tr, root, TC, TC, TC, new Vector2(0f, -112f), new Vector2(900f, 300f));
+            toastRoot = UIFactory.Rect(tr, root, TC, TC, TC, new Vector2(0f, -110f), new Vector2(760f, 300f));
             var vl = tr.AddComponent<VerticalLayoutGroup>();
             vl.childAlignment = TextAnchor.UpperCenter;
             vl.spacing = 10f;
@@ -218,7 +218,7 @@ namespace RobaYCorre
             var body = UIFactory.Panel(dim.transform, "Panel", color, C, Vector2.zero, size);
             var pop = body.transform.parent.gameObject.AddComponent<UIPop>();
             pop.elastic = true;
-            pop.duration = 0.7f;
+            pop.duration = 0.5f;
             panel = body.transform;
             return dim.gameObject;
         }
@@ -348,7 +348,7 @@ namespace RobaYCorre
             rays.gameObject.AddComponent<UISpin>().speed = 12f;
             var body = UIFactory.Panel(dim.transform, "Panel", UIFactory.PanelColor, C, Vector2.zero, new Vector2(1000f, last ? 900f : 820f));
             var pop = body.transform.parent.gameObject.AddComponent<UIPop>();
-            pop.elastic = true; pop.duration = 0.8f;
+            pop.elastic = true; pop.duration = 0.55f;
             var p = body.transform;
             var top = new Vector2(0.5f, 1f);
             float y = -30f;
@@ -457,9 +457,9 @@ namespace RobaYCorre
                 if (t.go != null && t.go.GetComponentInChildren<Text>().text == msg) return;
             Color bg = Color.Lerp(color, new Color(0.15f, 0.08f, 0.35f), 0.55f);
             bg.a = 0.95f;
-            var body = UIFactory.Panel(toastRoot, "Aviso", bg, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(860f, 50f));
+            var body = UIFactory.Panel(toastRoot, "Aviso", bg, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(760f, 46f));
             var root = body.transform.parent.gameObject;
-            UIFactory.Label(body.transform, msg, 23, Color.white, TextAnchor.MiddleCenter, C, new Vector2(0f, 2f), new Vector2(840f, 48f));
+            UIFactory.Label(body.transform, msg, 22, Color.white, TextAnchor.MiddleCenter, C, new Vector2(0f, 1f), new Vector2(740f, 44f));
             var pop = root.AddComponent<UIPop>();
             pop.duration = 0.35f;
             toasts.Add((root, 2.6f));

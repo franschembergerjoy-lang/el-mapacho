@@ -162,6 +162,77 @@ namespace RobaYCorre.EditorTools
             }
         }
 
+        /// <summary>Renderiza todos los personajes en fila (para revisar los modelos): Capturas/Personajes_*.png</summary>
+        public static void ShowcaseBatch()
+        {
+            try
+            {
+                MeshLib.Build();
+                MatLib.Build();
+                string dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Capturas"));
+                Directory.CreateDirectory(dir);
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                LevelBuilder.SetupLighting();
+                var floor = new GameObject("Suelo");
+                floor.AddComponent<MeshFilter>().sharedMesh = MeshLib.BoxUV(new Vector3(20f, 0.1f, 10f), 0.5f);
+                floor.AddComponent<MeshRenderer>().sharedMaterial = MatLib.Floor("Madera", MatLib.FloorStyle.Wood, new Color(0.82f, 0.6f, 0.38f), new Color(0.55f, 0.37f, 0.22f));
+                floor.transform.position = new Vector3(0f, -0.05f, 0f);
+                string[] names = { "Mapache", "Perro", "Habitante_Pijama", "Habitante_Bata", "Habitante_Insomne", "Coleccionista", "Mayordomo", "Ama_de_llaves" };
+                float x = -6.2f;
+                foreach (var n in names)
+                {
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(FindPrefab(n));
+                    if (prefab == null) continue;
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                    float w = n == "Mapache" || n == "Perro" ? 1.3f : 1.6f;
+                    go.transform.position = new Vector3(x + w / 2f, 0f, 0f);
+                    go.transform.rotation = Quaternion.Euler(0f, 200f, 0f);
+                    if (n == "Mapache" || n == "Perro") go.transform.localScale = Vector3.one * 1.5f;
+                    x += w;
+                }
+                var camGo = new GameObject("Cam");
+                var cam = camGo.AddComponent<Camera>();
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = new Color(0.35f, 0.4f, 0.6f);
+                cam.fieldOfView = 30f;
+                camGo.AddComponent<UniversalAdditionalCameraData>().renderPostProcessing = true;
+                void Render(string file, Vector3 pos, Vector3 look, int w, int h)
+                {
+                    camGo.transform.position = pos;
+                    camGo.transform.LookAt(look);
+                    var rt = new RenderTexture(w, h, 24) { antiAliasing = 4 };
+                    cam.targetTexture = rt;
+                    cam.Render(); cam.Render();
+                    RenderTexture.active = rt;
+                    var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+                    tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                    tex.Apply();
+                    cam.targetTexture = null;
+                    RenderTexture.active = null;
+                    File.WriteAllBytes(Path.Combine(dir, file), tex.EncodeToPNG());
+                }
+                Render("Personajes_todos.png", new Vector3(0.2f, 2.6f, -8.5f), new Vector3(0.2f, 0.9f, 0f), 2400, 900);
+                Render("Personajes_mapache_perro.png", new Vector3(-4.3f, 1.4f, -3.2f), new Vector3(-4.3f, 0.45f, 0f), 1200, 900);
+                Render("Personajes_caras.png", new Vector3(1.3f, 1.9f, -3.6f), new Vector3(1.3f, 1.45f, 0f), 2000, 800);
+                EditorApplication.Exit(0);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        static string FindPrefab(string name)
+        {
+            foreach (var guid in AssetDatabase.FindAssets(name + " t:Prefab", new[] { "Assets/Prefabs" }))
+            {
+                var p = AssetDatabase.GUIDToAssetPath(guid);
+                if (Path.GetFileNameWithoutExtension(p) == name) return p;
+            }
+            return null;
+        }
+
         // ------------------------------------------------------------------ capturas
 
         [MenuItem("Roba y corre/Capturas de pantalla de las escenas")]

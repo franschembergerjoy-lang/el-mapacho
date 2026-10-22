@@ -217,7 +217,7 @@ namespace RobaYCorre.EditorTools
             string key = "Pared_" + paletteName;
             if (cache.TryGetValue(key, out var m) && m != null) return m;
             var baseCol = palette.TryGetValue(paletteName, out var def) ? def.col : Color.white;
-            var tex = MakeTexture("PapelPintado", FloorStyle.Wallpaper, Color.white, new Color(0.88f, 0.88f, 0.88f));
+            var tex = MakeTexture("PapelPintado", FloorStyle.Wallpaper, Color.white, new Color(0.92f, 0.92f, 0.92f));
             m = LoadOrCreate($"{FloorFolder}/M_Pared_{paletteName}.mat", Lit);
             m.SetTexture("_BaseMap", tex);
             m.SetColor("_BaseColor", baseCol);
@@ -282,8 +282,8 @@ namespace RobaYCorre.EditorTools
                             }
                         case FloorStyle.Carpet:
                             {
-                                float weave = ((x + y) % 4 < 2 ? 0.97f : 1.03f);
-                                c = Color.Lerp(a, b, n * 0.3f + pn * 0.25f) * weave;
+                                float pn2 = Mathf.PerlinNoise(x * 0.12f, y * 0.12f + 20f);
+                                c = Color.Lerp(a, b, pn * 0.3f + pn2 * 0.2f);
                                 break;
                             }
                         case FloorStyle.Checker:
@@ -302,18 +302,16 @@ namespace RobaYCorre.EditorTools
                             break;
                         case FloorStyle.Wallpaper:
                             {
-                                // Rayas verticales suaves con lunares pequeños.
-                                bool stripe = (x / 16) % 2 == 0;
-                                c = stripe ? a : b;
-                                float dx = (x % 32) - 24f, dy = (y % 32) - 16f;
-                                if (!stripe && dx * dx + dy * dy < 9f) c = Color.Lerp(b, Color.white, 0.6f);
-                                c *= 0.98f + 0.04f * n;
+                                // Rayas anchas y suaves (sin muaré a distancia).
+                                float band = 0.5f + 0.5f * Mathf.Cos(x * Mathf.PI * 2f / 128f);
+                                c = Color.Lerp(b, a, Mathf.SmoothStep(0.2f, 0.8f, band));
+                                c *= 0.985f + 0.03f * pn;
                                 break;
                             }
                         case FloorStyle.Grass:
                             {
-                                float blade = Hash(x, y / 3, seed) > 0.7f ? 1.08f : 1f;
-                                c = Color.Lerp(a, b, pn * 0.8f + n * 0.15f) * blade;
+                                float pn2 = Mathf.PerlinNoise(x * 0.11f + 40f, y * 0.11f);
+                                c = Color.Lerp(a, b, pn * 0.7f + pn2 * 0.25f);
                                 break;
                             }
                     }

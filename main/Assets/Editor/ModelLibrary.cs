@@ -134,12 +134,7 @@ namespace RobaYCorre.EditorTools
         {
             prefabs.Clear();
             BuildRaccoon();
-            BuildHuman("Habitante_Pijama", "PijamaAzul", "PijamaAzulOscuro", "Piel", "PeloCastano", 0, false, false, "PijamaAzul", false, "el habitante");
-            BuildHuman("Habitante_Bata", "BataRosa", "BataRosa", "PielMorena", "PeloNegro", 1, false, false, "BataRosa", false, "la vecina");
-            BuildHuman("Habitante_Insomne", "PijamaVerde", "PijamaVerde", "Piel", "PeloRubio", 0, false, true, null, false, "el insomne");
-            BuildHuman("Coleccionista", "BataMorada", "BataMorada", "Piel", "PeloGris", 2, true, true, "BataMorada", false, "el coleccionista");
-            BuildHuman("Mayordomo", "TrajeNegro", "TrajeNegro", "Piel", "PeloGris", 0, true, false, null, true, "el mayordomo");
-            BuildHuman("Ama_de_llaves", "UniformeVerde", "TrajeNegro", "PielMorena", "PeloCastano", 1, false, false, null, false, "la ama de llaves");
+            BuildHumans();
             BuildDog();
 
             BuildBed("Cama", "CamaAzul", "MaderaMedia", 1.6f, 2.2f);
@@ -203,11 +198,15 @@ namespace RobaYCorre.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        // ------------------------------------------------------------------ personajes
+        // ------------------------------------------------------------------ personajes (v3)
+
+        static GameObject Ss(Transform p, string m, float x, float y, float z, float sx, float sy, float sz, float rx = 0, float ry = 0, float rz = 0) => P(p, MeshLib.SmoothSphere, MatLib.Get(m), x, y, z, sx, sy, sz, rx, ry, rz);
+        /// <summary>Cápsula: sx/sz = grosor, sy = mitad del largo total.</summary>
+        static GameObject Cp(Transform p, string m, float x, float y, float z, float sx, float sy, float sz, float rx = 0, float ry = 0, float rz = 0) => P(p, MeshLib.Capsule, MatLib.Get(m), x, y, z, sx, sy, sz, rx, ry, rz);
 
         /// <summary>
-        /// Contorno de dibujo animado: copia cada pieza un poco más grande con un material oscuro que solo
-        /// pinta las caras traseras.
+        /// Contorno de dibujo animado (copia algo más grande que solo pinta las caras traseras).
+        /// Solo se aplica a las piezas grandes: los detalles pequeños (ojos, botones...) quedan limpios.
         /// </summary>
         static void AddOutlines(Transform root, float thickness, params string[] skip)
         {
@@ -223,18 +222,30 @@ namespace RobaYCorre.EditorTools
                 if (skipIt) continue;
                 var tr = r.transform;
                 Vector3 sc = tr.localScale;
-                if (Mathf.Min(sc.x, Mathf.Min(sc.y, sc.z)) < 0.03f) continue;
+                var mesh = r.GetComponent<MeshFilter>().sharedMesh;
+                Vector3 size = Vector3.Scale(mesh.bounds.size, sc);
+                float maxDim = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+                float minDim = Mathf.Min(size.x, Mathf.Min(size.y, size.z));
+                if (maxDim < 0.14f || minDim < 0.045f) continue;
                 var hull = new GameObject("Contorno");
                 hull.transform.SetParent(tr.parent, false);
                 hull.transform.localPosition = tr.localPosition;
                 hull.transform.localRotation = tr.localRotation;
-                hull.transform.localScale = sc + Vector3.one * thickness * 2f;
-                hull.AddComponent<MeshFilter>().sharedMesh = r.GetComponent<MeshFilter>().sharedMesh;
+                Vector3 bs = mesh.bounds.size;
+                hull.transform.localScale = new Vector3(sc.x + thickness * 2f / Mathf.Max(0.01f, bs.x), sc.y + thickness * 2f / Mathf.Max(0.01f, bs.y), sc.z + thickness * 2f / Mathf.Max(0.01f, bs.z));
+                hull.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var hr = hull.AddComponent<MeshRenderer>();
                 hr.sharedMaterial = mat;
                 hr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 hr.receiveShadows = false;
             }
+        }
+
+        /// <summary>Ojos de dibujo animado: óvalo negro con brillo.</summary>
+        static void CartoonEye(Transform p, float x, float y, float z, float w, float h)
+        {
+            Ss(p, "Negro", x, y, z, w, h, w * 0.6f);
+            Ss(p, "OjoBlanco", x - w * 0.18f, y + h * 0.2f, z + w * 0.28f, w * 0.35f, w * 0.35f, w * 0.2f);
         }
 
         static void BuildRaccoon()
@@ -250,48 +261,42 @@ namespace RobaYCorre.EditorTools
 
             var model = Pv(root, "Modelo", 0, 0, 0);
             var body = Pv(model, "Cuerpo", 0, 0.34f, 0);
-            S(body, "MapacheGris", 0, 0, -0.02f, 0.52f, 0.44f, 0.68f);
-            S(body, "MapacheOscuro", 0, 0.13f, -0.08f, 0.34f, 0.18f, 0.46f);
-            S(body, "MapacheCrema", 0, -0.08f, 0.04f, 0.38f, 0.26f, 0.52f);
-            S(body, "MapacheCrema", 0, -0.02f, 0.2f, 0.34f, 0.3f, 0.3f);
+            Ss(body, "MapacheGris", 0, 0, -0.03f, 0.5f, 0.42f, 0.66f);
+            Ss(body, "MapacheCrema", 0, -0.07f, 0.1f, 0.38f, 0.3f, 0.42f);
+            Ss(body, "MapacheOscuro", 0, 0.15f, -0.1f, 0.26f, 0.08f, 0.36f);
 
-            var pack = Pv(body, "Mochila", 0, 0.22f, -0.1f);
-            B(pack, "Mochila", 0, 0, 0, 0.34f, 0.24f, 0.32f);
-            B(pack, "MaderaOscura", 0, 0.125f, 0.02f, 0.36f, 0.04f, 0.34f);
-            B(pack, "Mochila", 0, 0.03f, -0.17f, 0.24f, 0.14f, 0.04f);
-            B(pack, "Dorado", 0, 0.05f, -0.195f, 0.07f, 0.07f, 0.02f);
-            foreach (float s in new[] { -1f, 1f }) B(pack, "MaderaOscura", s * 0.12f, -0.08f, 0.16f, 0.04f, 0.2f, 0.04f);
+            var pack = Pv(body, "Mochila", 0, 0.22f, -0.12f);
+            B(pack, "Mochila", 0, 0, 0, 0.32f, 0.22f, 0.3f);
+            Ss(pack, "Mochila", 0, 0.11f, 0, 0.33f, 0.1f, 0.31f);
+            B(pack, "MaderaOscura", 0, 0.03f, -0.16f, 0.22f, 0.13f, 0.03f);
+            Ss(pack, "Dorado", 0, 0.05f, -0.18f, 0.06f, 0.06f, 0.03f);
+            foreach (float s in new[] { -1f, 1f }) Cp(pack, "MaderaOscura", s * 0.12f, -0.07f, 0.16f, 0.04f, 0.1f, 0.04f);
 
             var head = Pv(body, "Cabeza", 0, 0.16f, 0.36f);
-            S(head, "MapacheGris", 0, 0.06f, 0.06f, 0.48f, 0.4f, 0.42f);
+            Ss(head, "MapacheGris", 0, 0.06f, 0.05f, 0.5f, 0.42f, 0.44f);
+            // Hocico crema, frente blanca y antifaz.
+            Ss(head, "MapacheCrema", 0, -0.04f, 0.24f, 0.26f, 0.17f, 0.22f);
+            Ss(head, "Blanco", 0, 0.19f, 0.17f, 0.2f, 0.1f, 0.14f);
+            Ss(head, "MapacheOscuro", 0, 0.08f, 0.2f, 0.46f, 0.14f, 0.24f);
             foreach (float s in new[] { -1f, 1f })
             {
-                // Mejillas peludas.
-                S(head, "MapacheCrema", s * 0.2f, -0.02f, 0.12f, 0.17f, 0.15f, 0.15f);
-                Co(head, "MapacheCrema", s * 0.29f, -0.03f, 0.1f, 0.1f, 0.13f, 0.08f, 0, 0, s * -75f);
-                // Antifaz.
-                S(head, "MapacheOscuro", s * 0.1f, 0.09f, 0.21f, 0.21f, 0.15f, 0.14f, 0, 0, s * -12f);
-                // Ojos grandes con brillo.
-                S(head, "OjoBlanco", s * 0.1f, 0.1f, 0.29f, 0.11f, 0.12f, 0.06f);
-                S(head, "Negro", s * 0.1f, 0.095f, 0.315f, 0.06f, 0.07f, 0.03f);
-                S(head, "OjoBlanco", s * 0.085f, 0.12f, 0.33f, 0.022f, 0.022f, 0.01f);
-                // Cejas blancas.
-                S(head, "Blanco", s * 0.12f, 0.19f, 0.25f, 0.1f, 0.03f, 0.05f, 0, 0, s * -15f);
+                Ss(head, "MapacheCrema", s * 0.21f, -0.03f, 0.12f, 0.17f, 0.15f, 0.16f);
+                Co(head, "MapacheCrema", s * 0.29f, -0.04f, 0.1f, 0.09f, 0.12f, 0.07f, 0, 0, s * -75f);
+                CartoonEye(head, s * 0.1f, 0.09f, 0.3f, 0.075f, 0.1f);
+                Ss(head, "Blanco", s * 0.12f, 0.17f, 0.27f, 0.09f, 0.03f, 0.04f, 0, 0, s * -12f);
             }
-            S(head, "MapacheOscuro", 0, 0.08f, 0.24f, 0.12f, 0.08f, 0.1f);
-            S(head, "Blanco", 0, 0.17f, 0.21f, 0.14f, 0.08f, 0.12f);
-            S(head, "MapacheCrema", 0, -0.03f, 0.31f, 0.18f, 0.13f, 0.18f);
-            S(head, "Negro", 0, 0.005f, 0.4f, 0.08f, 0.06f, 0.06f);
-            B(head, "Negro", 0, -0.065f, 0.385f, 0.06f, 0.012f, 0.012f);
-            var earL = Pv(head, "OrejaIzq", -0.15f, 0.22f, 0.02f, 0, 0, 15);
-            var earR = Pv(head, "OrejaDer", 0.15f, 0.22f, 0.02f, 0, 0, -15);
+            Ss(head, "Negro", 0, 0f, 0.36f, 0.09f, 0.065f, 0.06f);
+            Ss(head, "Blanco", -0.015f, 0.015f, 0.385f, 0.025f, 0.015f, 0.01f);
+            B(head, "Chocolate", 0, -0.07f, 0.34f, 0.07f, 0.014f, 0.014f);
+            var earL = Pv(head, "OrejaIzq", -0.16f, 0.23f, 0.02f, 0, 0, 15);
+            var earR = Pv(head, "OrejaDer", 0.16f, 0.23f, 0.02f, 0, 0, -15);
             foreach (var ear in new[] { earL, earR })
             {
-                Co(ear, "MapacheGris", 0, 0.07f, 0, 0.15f, 0.17f, 0.08f);
-                Co(ear, "MapacheOscuro", 0, 0.06f, 0.03f, 0.09f, 0.1f, 0.03f);
-                S(ear, "Blanco", 0, 0.14f, 0, 0.05f, 0.05f, 0.05f);
+                Co(ear, "MapacheGris", 0, 0.07f, 0, 0.16f, 0.17f, 0.09f);
+                Co(ear, "Rosa", 0, 0.06f, 0.035f, 0.08f, 0.1f, 0.02f);
+                Ss(ear, "Blanco", 0, 0.14f, 0, 0.05f, 0.05f, 0.05f);
             }
-            var headSlot = Pv(head, "RanuraCabeza", 0, 0.26f, 0.05f);
+            var headSlot = Pv(head, "RanuraCabeza", 0, 0.27f, 0.05f);
             var holdSlot = Pv(body, "RanuraBrazos", 0, 0.66f, 0.12f);
 
             var legs = new Transform[4];
@@ -300,9 +305,9 @@ namespace RobaYCorre.EditorTools
             {
                 bool back = i >= 2;
                 var leg = Pv(model, "Pata" + i, lp[i, 0], 0.21f, lp[i, 1]);
-                if (back) S(leg, "MapacheGris", 0, 0.02f, 0, 0.17f, 0.17f, 0.2f);
-                Cy(leg, "MapacheOscuro", 0, -0.09f, 0, 0.11f, 0.18f, 0.11f);
-                S(leg, "Negro", 0, -0.19f, 0.03f, 0.13f, 0.065f, 0.16f);
+                if (back) Ss(leg, "MapacheGris", 0, 0.02f, -0.01f, 0.17f, 0.18f, 0.21f);
+                Cp(leg, "MapacheOscuro", 0, -0.08f, 0, 0.11f, 0.1f, 0.11f);
+                Ss(leg, "Negro", 0, -0.18f, 0.035f, 0.13f, 0.07f, 0.17f);
                 legs[i] = leg;
             }
 
@@ -311,9 +316,9 @@ namespace RobaYCorre.EditorTools
             tail.Add(prev);
             for (int i = 0; i < 8; i++)
             {
-                float size = 0.23f - i * 0.012f;
+                float size = 0.24f - i * 0.012f;
                 string m = i == 7 ? "MapacheOscuro" : (i % 2 == 0 ? "MapacheGris" : "MapacheOscuro");
-                S(prev, m, 0, 0, -0.05f, size, size, 0.13f);
+                Ss(prev, m, 0, 0, -0.05f, size, size, 0.14f);
                 if (i < 7)
                 {
                     prev = Pv(prev, "ColaSeg" + (i + 1), 0, 0.012f, -0.09f);
@@ -327,7 +332,7 @@ namespace RobaYCorre.EditorTools
                 float a = i * Mathf.PI * 2f / 3f;
                 Oc(dizzy, "Brillo", Mathf.Cos(a) * 0.24f, 0, Mathf.Sin(a) * 0.24f, 0.11f, 0.11f, 0.11f);
             }
-            AddOutlines(model, 0.018f, "Mareo");
+            AddOutlines(model, 0.014f, "Mareo");
 
             var vis = root.gameObject.AddComponent<RaccoonVisual>();
             vis.model = model; vis.body = body; vis.head = head; vis.legs = legs; vis.tailSegments = tail.ToArray();
@@ -337,90 +342,158 @@ namespace RobaYCorre.EditorTools
             Save(root, "Personajes");
         }
 
-        static void BuildHuman(string name, string shirt, string pants, string skin, string hair, int hairStyle, bool mustache, bool glasses, string capColor, bool bowtie, string displayName)
-        {
-            var root = R(name);
-            var agent = root.gameObject.AddComponent<NavMeshAgent>();
-            agent.radius = 0.3f; agent.height = 1.75f; agent.speed = 1.5f; agent.enabled = false;
-            var model = Pv(root, "Modelo", 0, 0, 0);
+        enum Outfit { Pijama, Bata, Traje, Uniforme }
 
-            var legL = Pv(model, "PiernaIzq", -0.12f, 0.78f, 0);
-            var legR = Pv(model, "PiernaDer", 0.12f, 0.78f, 0);
+        class HumanStyle
+        {
+            public string name, display, skin, hair, top, bottom, accent, cap;
+            public int hairStyle;      // 0 despeinado, 1 moño, 2 calvo con lados, 3 engominado
+            public Outfit outfit;
+            public bool glasses, mustache, monocle, eyeBags;
+        }
+
+        static void BuildHumans()
+        {
+            BuildHuman(new HumanStyle { name = "Habitante_Pijama", display = "el habitante", skin = "Piel", hair = "PeloCastano", hairStyle = 0, top = "PijamaAzul", bottom = "PijamaAzul", accent = "Blanco", cap = "PijamaAzul", outfit = Outfit.Pijama });
+            BuildHuman(new HumanStyle { name = "Habitante_Bata", display = "la vecina", skin = "PielMorena", hair = "PeloNegro", hairStyle = 1, top = "BataRosa", bottom = "PijamaAzulOscuro", accent = "Blanco", cap = "BataRosa", outfit = Outfit.Bata });
+            BuildHuman(new HumanStyle { name = "Habitante_Insomne", display = "el insomne", skin = "Piel", hair = "PeloRubio", hairStyle = 0, top = "PijamaVerde", bottom = "PijamaVerde", accent = "Juguete3", outfit = Outfit.Pijama, glasses = true, eyeBags = true });
+            BuildHuman(new HumanStyle { name = "Coleccionista", display = "el coleccionista", skin = "Piel", hair = "PeloGris", hairStyle = 2, top = "BataMorada", bottom = "TrajeNegro", accent = "Dorado", cap = "BataMorada", outfit = Outfit.Bata, mustache = true, monocle = true });
+            BuildHuman(new HumanStyle { name = "Mayordomo", display = "el mayordomo", skin = "Piel", hair = "PeloGris", hairStyle = 3, top = "TrajeNegro", bottom = "TrajeNegro", accent = "CamisaBlanca", outfit = Outfit.Traje, mustache = true });
+            BuildHuman(new HumanStyle { name = "Ama_de_llaves", display = "la ama de llaves", skin = "PielMorena", hair = "PeloCastano", hairStyle = 1, top = "UniformeVerde", bottom = "TrajeNegro", accent = "Blanco", outfit = Outfit.Uniforme });
+        }
+
+        static void BuildHuman(HumanStyle st)
+        {
+            var root = R(st.name);
+            var agent = root.gameObject.AddComponent<NavMeshAgent>();
+            agent.radius = 0.3f; agent.height = 1.7f; agent.speed = 1.5f; agent.enabled = false;
+            var model = Pv(root, "Modelo", 0, 0, 0);
+            bool skirt = st.outfit == Outfit.Bata || st.outfit == Outfit.Uniforme;
+
+            // Piernas cortas y redondeadas con pantuflas.
+            var legL = Pv(model, "PiernaIzq", -0.11f, 0.62f, 0);
+            var legR = Pv(model, "PiernaDer", 0.11f, 0.62f, 0);
             foreach (var leg in new[] { legL, legR })
             {
-                Cy(leg, pants, 0, -0.36f, 0, 0.2f, 0.72f, 0.2f);
-                S(leg, "Pantuflas", 0, -0.74f, 0.07f, 0.2f, 0.12f, 0.32f);
-                S(leg, "Blanco", 0, -0.69f, 0.2f, 0.08f, 0.07f, 0.07f);
-            }
-            var body = Pv(model, "Torso", 0, 0.78f, 0);
-            S(body, pants, 0, 0.06f, 0, 0.5f, 0.28f, 0.38f);
-            Pt(body, shirt, 0, 0.36f, 0, 0.6f, 0.62f, 0.42f);
-            S(body, shirt, 0, 0.26f, 0.03f, 0.5f, 0.42f, 0.4f);
-            S(body, shirt, 0, 0.66f, 0, 0.5f, 0.12f, 0.36f);
-            B(body, "Blanco", 0, 0.62f, 0.16f, 0.2f, 0.08f, 0.08f, 20, 0, 0);
-            for (int i = 0; i < 3; i++) S(body, "Blanco", 0, 0.5f - i * 0.13f, 0.215f, 0.05f, 0.05f, 0.03f);
-            B(body, "Blanco", 0.14f, 0.5f, 0.205f, 0.1f, 0.1f, 0.02f);
-            if (bowtie)
-            {
-                B(body, "CamisaBlanca", 0, 0.56f, 0.18f, 0.18f, 0.18f, 0.06f);
-                foreach (float s in new[] { -1f, 1f }) B(body, "Collar", s * 0.06f, 0.65f, 0.21f, 0.09f, 0.07f, 0.04f, 0, 0, s * 15f);
+                Cp(leg, st.bottom, 0, -0.27f, 0, 0.17f, 0.24f, 0.17f);
+                if (st.outfit == Outfit.Pijama) Cy(leg, st.accent, 0, -0.47f, 0, 0.18f, 0.04f, 0.18f);
+                string shoe = st.outfit == Outfit.Traje || st.outfit == Outfit.Uniforme ? "Negro" : "Pantuflas";
+                Ss(leg, shoe, 0, -0.57f, 0.06f, 0.19f, 0.11f, 0.3f);
+                if (shoe == "Pantuflas") Ss(leg, "Blanco", 0, -0.52f, 0.19f, 0.08f, 0.07f, 0.07f);
             }
 
-            var head = Pv(body, "Cabeza", 0, 0.72f, 0);
-            S(head, skin, 0, 0.19f, 0, 0.44f, 0.48f, 0.44f);
-            S(head, skin, 0, 0.15f, 0.23f, 0.11f, 0.12f, 0.12f);
-            B(head, "Chocolate", 0, 0.05f, 0.205f, 0.1f, 0.02f, 0.02f);
+            var body = Pv(model, "Torso", 0, 0.62f, 0);
+            Ss(body, st.bottom, 0, 0.04f, 0, 0.42f, 0.24f, 0.32f);
+            Ss(body, st.top, 0, 0.28f, 0, 0.52f, 0.58f, 0.4f);
+            Ss(body, st.top, 0, 0.48f, 0, 0.58f, 0.2f, 0.36f);
+            switch (st.outfit)
+            {
+                case Outfit.Pijama:
+                    foreach (float s in new[] { -1f, 1f }) B(body, "Blanco", s * 0.07f, 0.51f, 0.18f, 0.14f, 0.05f, 0.03f, 0, 0, s * -35f);
+                    for (int i = 0; i < 3; i++) Ss(body, st.accent, 0, 0.42f - i * 0.12f, 0.2f, 0.045f, 0.045f, 0.03f);
+                    Cy(body, st.accent, 0.13f, 0.37f, 0.18f, 0.1f, 0.01f, 0.1f, 80, 0, 0);
+                    break;
+                case Outfit.Bata:
+                    Pt(body, st.top, 0, -0.08f, 0, 0.56f, 0.42f, 0.46f, 180, 0, 0);
+                    Cy(body, st.accent, 0, 0.13f, 0, 0.48f, 0.05f, 0.38f);
+                    Ss(body, st.accent, 0.12f, 0.1f, 0.19f, 0.08f, 0.07f, 0.05f);
+                    foreach (float s in new[] { -1f, 1f }) B(body, st.accent, s * 0.075f, 0.4f, 0.19f, 0.05f, 0.28f, 0.02f, 0, 0, s * -22f);
+                    break;
+                case Outfit.Traje:
+                    Ss(body, st.accent, 0, 0.34f, 0.15f, 0.2f, 0.32f, 0.1f);
+                    foreach (float s in new[] { -1f, 1f })
+                    {
+                        Ss(body, "Collar", s * 0.045f, 0.5f, 0.2f, 0.08f, 0.06f, 0.04f);
+                        B(body, st.top, s * 0.09f, -0.05f, -0.17f, 0.13f, 0.38f, 0.04f, 10, 0, 0);
+                    }
+                    for (int i = 0; i < 2; i++) Ss(body, "Dorado", 0, 0.33f - i * 0.12f, 0.2f, 0.04f, 0.04f, 0.03f);
+                    break;
+                case Outfit.Uniforme:
+                    Pt(body, st.top, 0, -0.18f, 0, 0.6f, 0.5f, 0.48f, 180, 0, 0);
+                    B(body, st.accent, 0, -0.08f, 0.235f, 0.34f, 0.5f, 0.02f);
+                    B(body, st.accent, 0, 0.32f, 0.19f, 0.24f, 0.22f, 0.02f);
+                    Ss(body, st.accent, 0, 0.54f, 0.08f, 0.3f, 0.06f, 0.26f);
+                    break;
+            }
+            if (skirt) { legL.localScale = new Vector3(0.9f, 1f, 0.9f); legR.localScale = new Vector3(0.9f, 1f, 0.9f); }
+
+            // Cabeza grande de dibujo animado.
+            var head = Pv(body, "Cabeza", 0, 0.6f, 0);
+            Ss(head, st.skin, 0, 0.22f, 0, 0.52f, 0.5f, 0.48f);
             foreach (float s in new[] { -1f, 1f })
             {
-                S(head, "OjoBlanco", s * 0.09f, 0.24f, 0.19f, 0.09f, 0.1f, 0.05f);
-                S(head, "Negro", s * 0.09f, 0.235f, 0.21f, 0.05f, 0.06f, 0.03f);
-                S(head, "Rosa", s * 0.13f, 0.12f, 0.18f, 0.08f, 0.05f, 0.03f);
-                S(head, skin, s * 0.22f, 0.18f, 0, 0.08f, 0.11f, 0.07f);
-                B(head, hair, s * 0.09f, 0.31f, 0.2f, 0.1f, 0.025f, 0.02f, 0, 0, s * -10f);
+                Ss(head, st.skin, s * 0.26f, 0.21f, 0, 0.08f, 0.12f, 0.07f);
+                CartoonEye(head, s * 0.1f, 0.25f, 0.21f, 0.065f, 0.095f);
+                B(head, st.hair, s * 0.1f, 0.34f, 0.225f, 0.11f, 0.025f, 0.02f, 0, 0, s * -8f);
+                Ss(head, "Rosa", s * 0.15f, 0.15f, 0.2f, 0.08f, 0.05f, 0.03f);
+                if (st.eyeBags) Ss(head, "PijamaAzulOscuro", s * 0.1f, 0.19f, 0.215f, 0.08f, 0.025f, 0.02f);
             }
-            switch (hairStyle)
+            Ss(head, st.skin, 0, 0.17f, 0.25f, 0.1f, 0.09f, 0.09f);
+            if (st.mustache)
+                foreach (float s in new[] { -1f, 1f }) Ss(head, st.hair, s * 0.06f, 0.1f, 0.235f, 0.13f, 0.05f, 0.06f, 0, 0, s * -15f);
+            else
+                Cy(head, "Chocolate", 0, 0.09f, 0.225f, 0.1f, 0.01f, 0.03f, 80, 0, 90);
+            switch (st.hairStyle)
             {
                 case 0:
-                    S(head, hair, 0, 0.34f, -0.03f, 0.46f, 0.26f, 0.46f);
-                    S(head, hair, -0.12f, 0.38f, 0.1f, 0.18f, 0.14f, 0.16f);
-                    S(head, hair, 0.1f, 0.4f, 0.08f, 0.16f, 0.14f, 0.16f);
+                    Ss(head, st.hair, 0, 0.38f, -0.03f, 0.55f, 0.3f, 0.52f);
+                    Ss(head, st.hair, -0.12f, 0.45f, 0.1f, 0.2f, 0.14f, 0.18f, 0, 0, 20);
+                    Ss(head, st.hair, 0.1f, 0.47f, 0.06f, 0.18f, 0.14f, 0.18f, 0, 0, -15);
+                    Ss(head, st.hair, 0.02f, 0.5f, -0.08f, 0.18f, 0.12f, 0.18f);
                     break;
                 case 1:
-                    S(head, hair, 0, 0.34f, -0.04f, 0.47f, 0.27f, 0.47f);
-                    S(head, hair, 0, 0.5f, -0.12f, 0.22f, 0.2f, 0.22f);
-                    foreach (float s in new[] { -1f, 1f }) S(head, hair, s * 0.2f, 0.18f, -0.06f, 0.1f, 0.3f, 0.18f);
+                    Ss(head, st.hair, 0, 0.37f, -0.04f, 0.55f, 0.3f, 0.52f);
+                    Ss(head, st.hair, 0, 0.55f, -0.12f, 0.22f, 0.2f, 0.22f);
+                    foreach (float s in new[] { -1f, 1f }) Ss(head, st.hair, s * 0.22f, 0.24f, -0.08f, 0.1f, 0.28f, 0.2f);
+                    if (st.outfit == Outfit.Uniforme) Cy(head, st.accent, 0, 0.43f, 0.02f, 0.5f, 0.04f, 0.48f, -15, 0, 0);
+                    break;
+                case 2:
+                    foreach (float s in new[] { -1f, 1f }) Ss(head, st.hair, s * 0.24f, 0.27f, -0.06f, 0.11f, 0.17f, 0.26f);
+                    Ss(head, st.hair, 0, 0.24f, -0.22f, 0.36f, 0.2f, 0.1f);
                     break;
                 default:
-                    foreach (float s in new[] { -1f, 1f }) S(head, hair, s * 0.2f, 0.24f, -0.05f, 0.12f, 0.18f, 0.26f);
-                    S(head, hair, 0, 0.2f, -0.2f, 0.3f, 0.2f, 0.1f);
+                    Ss(head, st.hair, 0, 0.38f, -0.04f, 0.55f, 0.26f, 0.5f);
+                    B(head, st.hair, -0.1f, 0.47f, 0.1f, 0.06f, 0.06f, 0.26f, 0, 0, 15);
                     break;
             }
-            if (mustache) foreach (float s in new[] { -1f, 1f }) S(head, hair, s * 0.06f, 0.09f, 0.22f, 0.14f, 0.05f, 0.06f, 0, 0, s * -12f);
-            if (glasses)
+            if (st.glasses)
             {
-                B(head, "Negro", 0, 0.24f, 0.235f, 0.32f, 0.025f, 0.02f);
-                foreach (float s in new[] { -1f, 1f }) Cy(head, "Cristal", s * 0.09f, 0.24f, 0.23f, 0.13f, 0.015f, 0.13f, 90, 0, 0);
+                foreach (float s in new[] { -1f, 1f })
+                {
+                    Cy(head, "Negro", s * 0.1f, 0.25f, 0.245f, 0.15f, 0.012f, 0.15f, 90, 0, 0);
+                    Cy(head, "Cristal", s * 0.1f, 0.25f, 0.247f, 0.12f, 0.008f, 0.12f, 90, 0, 0);
+                }
+                B(head, "Negro", 0, 0.26f, 0.25f, 0.06f, 0.015f, 0.015f);
+            }
+            if (st.monocle)
+            {
+                Cy(head, "Dorado", 0.1f, 0.25f, 0.25f, 0.15f, 0.012f, 0.15f, 90, 0, 0);
+                Cy(head, "Cristal", 0.1f, 0.25f, 0.252f, 0.12f, 0.008f, 0.12f, 90, 0, 0);
+                B(head, "Dorado", 0.16f, 0.13f, 0.24f, 0.008f, 0.22f, 0.008f, 0, 0, 10);
             }
             GameObject nightcap = null;
-            if (capColor != null)
+            if (st.cap != null)
             {
-                var nc = Pv(head, "GorroDormir", 0, 0.38f, -0.02f, -25, 0, 0);
-                Co(nc, capColor, 0, 0.15f, 0, 0.44f, 0.42f, 0.44f);
-                S(nc, "Blanco", 0, 0.36f, 0, 0.12f, 0.12f, 0.12f);
-                Cy(nc, "Blanco", 0, -0.04f, 0, 0.46f, 0.07f, 0.46f);
+                var nc = Pv(head, "GorroDormir", 0, 0.44f, -0.03f, -25, 0, 0);
+                Co(nc, st.cap, 0, 0.16f, 0, 0.5f, 0.44f, 0.5f);
+                Ss(nc, "Blanco", 0, 0.38f, 0, 0.13f, 0.13f, 0.13f);
+                Cy(nc, "Blanco", 0, -0.05f, 0, 0.53f, 0.08f, 0.53f);
                 nightcap = nc.gameObject;
             }
 
-            var armL = Pv(body, "BrazoIzq", -0.33f, 0.6f, 0);
-            var armR = Pv(body, "BrazoDer", 0.33f, 0.6f, 0);
+            // Brazos con mano de "manopla".
+            var armL = Pv(body, "BrazoIzq", -0.3f, 0.47f, 0);
+            var armR = Pv(body, "BrazoDer", 0.3f, 0.47f, 0);
             foreach (var arm in new[] { armL, armR })
             {
-                S(arm, shirt, 0, -0.02f, 0, 0.17f, 0.17f, 0.17f);
-                Cy(arm, shirt, 0, -0.26f, 0, 0.15f, 0.48f, 0.15f);
-                Cy(arm, "Blanco", 0, -0.5f, 0, 0.16f, 0.04f, 0.16f);
-                S(arm, skin, 0, -0.58f, 0.01f, 0.16f, 0.17f, 0.16f);
+                float side = arm == armL ? -1f : 1f;
+                Ss(arm, st.top, 0, 0, 0, 0.18f, 0.18f, 0.18f);
+                Cp(arm, st.top, 0, -0.2f, 0, 0.14f, 0.16f, 0.14f);
+                Cy(arm, st.outfit == Outfit.Traje ? "CamisaBlanca" : st.accent, 0, -0.36f, 0, 0.15f, 0.04f, 0.15f);
+                Ss(arm, st.skin, 0, -0.45f, 0.01f, 0.15f, 0.16f, 0.13f);
+                Ss(arm, st.skin, side * -0.06f, -0.42f, 0.05f, 0.06f, 0.08f, 0.06f, 0, 0, side * 30f);
             }
-            var fl = Pv(armR, "Linterna", 0, -0.62f, 0.05f);
+            var fl = Pv(armR, "Linterna", 0, -0.5f, 0.05f);
             Cy(fl, "Negro", 0, -0.06f, 0, 0.08f, 0.2f, 0.08f);
             Cy(fl, "Linterna", 0, -0.17f, 0, 0.1f, 0.03f, 0.1f);
             var lt = Pv(fl, "Haz", 0, -0.19f, 0, 90, 0, 0);
@@ -431,14 +504,15 @@ namespace RobaYCorre.EditorTools
             light.range = 8f;
             light.spotAngle = 55f;
             light.shadows = LightShadows.None;
-            AddOutlines(model, 0.02f, "Linterna");
+            AddOutlines(model, 0.016f, "Linterna");
 
             var vis = root.gameObject.AddComponent<HumanVisual>();
             vis.model = model; vis.body = body; vis.head = head; vis.armL = armL; vis.armR = armR; vis.legL = legL; vis.legR = legR;
             vis.nightcap = nightcap; vis.flashlight = light;
+            vis.sleepOffset = new Vector3(0f, 0.62f, 0.8f);
             var res = root.gameObject.AddComponent<Resident>();
             res.visual = vis;
-            res.displayName = displayName;
+            res.displayName = st.display;
             Save(root, "Personajes");
         }
 
@@ -448,39 +522,39 @@ namespace RobaYCorre.EditorTools
             var agent = root.gameObject.AddComponent<NavMeshAgent>();
             agent.radius = 0.25f; agent.height = 0.7f; agent.enabled = false;
             var model = Pv(root, "Modelo", 0, 0, 0);
-            S(model, "PerroMarron", 0, 0.42f, -0.02f, 0.4f, 0.36f, 0.72f);
-            S(model, "PerroMarron", 0, 0.47f, 0.22f, 0.36f, 0.36f, 0.34f);
-            S(model, "PerroClaro", 0, 0.38f, 0.14f, 0.3f, 0.26f, 0.42f);
-            S(model, "PerroOscuro", 0.13f, 0.53f, -0.12f, 0.18f, 0.14f, 0.24f);
-            S(model, "PerroOscuro", -0.1f, 0.5f, -0.24f, 0.14f, 0.12f, 0.16f);
-            var head = Pv(model, "Cabeza", 0, 0.64f, 0.38f);
-            S(head, "PerroMarron", 0, 0.05f, 0.03f, 0.36f, 0.32f, 0.34f);
-            S(head, "PerroClaro", 0, -0.04f, 0.22f, 0.2f, 0.15f, 0.26f);
-            S(head, "PerroOscuro", 0.08f, 0.1f, 0.12f, 0.14f, 0.14f, 0.12f);
-            S(head, "Negro", 0, 0.01f, 0.35f, 0.1f, 0.075f, 0.07f);
-            S(head, "Rosa", 0.03f, -0.12f, 0.27f, 0.07f, 0.02f, 0.1f, 10, 0, 0);
+            Ss(model, "PerroMarron", 0, 0.42f, -0.03f, 0.4f, 0.36f, 0.7f);
+            Ss(model, "PerroClaro", 0, 0.38f, 0.16f, 0.3f, 0.3f, 0.34f);
+            Ss(model, "PerroOscuro", 0.11f, 0.54f, -0.12f, 0.2f, 0.12f, 0.26f);
+            Ss(model, "PerroOscuro", -0.09f, 0.5f, -0.27f, 0.15f, 0.1f, 0.16f);
+            var head = Pv(model, "Cabeza", 0, 0.64f, 0.36f);
+            Ss(head, "PerroMarron", 0, 0.06f, 0.03f, 0.36f, 0.32f, 0.34f);
+            Ss(head, "PerroClaro", 0, -0.03f, 0.2f, 0.22f, 0.16f, 0.24f);
+            Ss(head, "PerroOscuro", 0.08f, 0.12f, 0.12f, 0.14f, 0.13f, 0.12f);
+            Ss(head, "Negro", 0, 0.02f, 0.32f, 0.1f, 0.075f, 0.07f);
+            Ss(head, "Blanco", -0.02f, 0.04f, 0.35f, 0.025f, 0.015f, 0.01f);
+            Ss(head, "Rosa", 0.02f, -0.11f, 0.27f, 0.08f, 0.025f, 0.1f, 15, 0, 0);
             foreach (float s in new[] { -1f, 1f })
             {
-                S(head, "OjoBlanco", s * 0.09f, 0.11f, 0.18f, 0.085f, 0.09f, 0.05f);
-                S(head, "Negro", s * 0.09f, 0.105f, 0.205f, 0.05f, 0.055f, 0.02f);
-                B(head, "PerroOscuro", s * 0.09f, 0.18f, 0.18f, 0.08f, 0.02f, 0.02f, 0, 0, s * 10f);
-                S(head, "PerroOscuro", s * 0.18f, -0.01f, -0.01f, 0.1f, 0.3f, 0.17f, 0, 0, s * 18f);
+                CartoonEye(head, s * 0.085f, 0.12f, 0.18f, 0.055f, 0.075f);
+                B(head, "PerroOscuro", s * 0.085f, 0.19f, 0.185f, 0.08f, 0.02f, 0.02f, 0, 0, s * 12f);
+                Ss(head, "PerroOscuro", s * 0.18f, 0.0f, -0.01f, 0.1f, 0.3f, 0.17f, 0, 0, s * 18f);
             }
-            Cy(model, "Collar", 0, 0.56f, 0.3f, 0.3f, 0.06f, 0.3f, 70, 0, 0);
-            Cy(model, "Dorado", 0, 0.48f, 0.42f, 0.08f, 0.015f, 0.08f, 80, 0, 0);
+            Cy(model, "Collar", 0, 0.58f, 0.3f, 0.25f, 0.06f, 0.25f, 60, 0, 0);
+            Cy(model, "Dorado", 0, 0.5f, 0.4f, 0.07f, 0.015f, 0.07f, 70, 0, 0);
             var legs = new Transform[4];
             float[,] lp = { { -0.12f, 0.24f }, { 0.12f, 0.24f }, { -0.12f, -0.22f }, { 0.12f, -0.22f } };
             for (int i = 0; i < 4; i++)
             {
                 var leg = Pv(model, "Pata" + i, lp[i, 0], 0.28f, lp[i, 1]);
-                Cy(leg, "PerroMarron", 0, -0.13f, 0, 0.11f, 0.26f, 0.11f);
-                S(leg, "PerroClaro", 0, -0.26f, 0.03f, 0.13f, 0.07f, 0.16f);
+                if (i >= 2) Ss(leg, "PerroMarron", 0, 0.04f, -0.01f, 0.16f, 0.2f, 0.2f);
+                Cp(leg, "PerroMarron", 0, -0.12f, 0, 0.11f, 0.12f, 0.11f);
+                Ss(leg, "PerroClaro", 0, -0.25f, 0.035f, 0.13f, 0.07f, 0.17f);
                 legs[i] = leg;
             }
             var tail = Pv(model, "Cola", 0, 0.52f, -0.36f, 35, 0, 0);
-            Cy(tail, "PerroMarron", 0, 0, -0.1f, 0.07f, 0.22f, 0.07f, 90, 0, 0);
-            S(tail, "PerroClaro", 0, 0, -0.22f, 0.08f, 0.08f, 0.1f);
-            AddOutlines(model, 0.018f);
+            Cp(tail, "PerroMarron", 0, 0, -0.11f, 0.07f, 0.12f, 0.07f, 90, 0, 0);
+            Ss(tail, "PerroClaro", 0, 0, -0.23f, 0.08f, 0.08f, 0.09f);
+            AddOutlines(model, 0.014f);
             var dog = root.gameObject.AddComponent<Dog>();
             dog.model = model; dog.head = head; dog.tail = tail; dog.legs = legs;
             Save(root, "Personajes");
@@ -763,10 +837,11 @@ namespace RobaYCorre.EditorTools
         static void BuildRug(string name, string color)
         {
             var root = R(name);
-            B(root, "AlfombraBorde", 0, 0.008f, 0, 2.5f, 0.016f, 1.7f);
-            B(root, color, 0, 0.012f, 0, 2.3f, 0.016f, 1.5f);
-            B(root, "AlfombraBorde", 0, 0.014f, 0, 1.4f, 0.016f, 0.7f);
-            B(root, color, 0, 0.016f, 0, 1.2f, 0.016f, 0.5f);
+            // Capas separadas 1 cm para que no parpadeen (z-fighting).
+            B(root, "AlfombraBorde", 0, 0.01f, 0, 2.5f, 0.02f, 1.7f);
+            B(root, color, 0, 0.02f, 0, 2.3f, 0.02f, 1.5f);
+            B(root, "AlfombraBorde", 0, 0.03f, 0, 1.4f, 0.02f, 0.7f);
+            B(root, color, 0, 0.04f, 0, 1.2f, 0.02f, 0.5f);
             Save(root, "Decoracion");
         }
 
@@ -918,9 +993,9 @@ namespace RobaYCorre.EditorTools
         {
             var root = R(name);
             B(root, "Dorado", 0, 1.0f, 0.02f, 1.0f, 0.7f, 0.04f);
-            B(root, bg, 0, 1.0f, 0.045f, 0.86f, 0.56f, 0.01f);
-            S(root, fg, -0.12f, 0.9f, 0.05f, 0.5f, 0.25f, 0.01f);
-            S(root, "Juguete3", 0.25f, 1.12f, 0.052f, 0.14f, 0.14f, 0.01f);
+            B(root, bg, 0, 1.0f, 0.048f, 0.86f, 0.56f, 0.016f);
+            S(root, fg, -0.12f, 0.9f, 0.062f, 0.5f, 0.25f, 0.012f);
+            S(root, "Juguete3", 0.25f, 1.12f, 0.062f, 0.14f, 0.14f, 0.012f);
             Save(root, "Decoracion");
         }
 
